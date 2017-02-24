@@ -122,3 +122,29 @@ test(rect);
 #+END_SRC
 Единственное корректное решение - убрать методы set из Rectangle и Square, сделав их неизменяемыми.
 **** Inheritance breaks encapsulation
+Хотим посчитать, сколько раз в коллекцию добавлялся элемент.
+#+BEGIN_SRC java
+class CountingSet extends HashSet {
+   private int count = 0;
+   public boolean add(Object o) {
+       count++;
+       return super.add(o);
+   }
+   public boolean addAll(Collection c) {
+       count += c.size();
+       return super.addAll(c);
+   }
+}
+#+END_SRC
+*НО*:
+#+BEGIN_SRC java
+CountingSet set = new CountingSet();
+set.addAll(Arrays.asList("1", "2", "3"));
+// set.count == 6, хотя добавили 3 элемента!
+#+END_SRC
+Наследование реализации метода приводит к разным результатам в зависимости от реализации базового класса. Таким образом детали реализации прорываются через инкапсуляцию. 
+Решение проблемы - использовать композицию классов (*favor composition over inheritance*).
+**** Наследование и code reuse
+#+ATTR_HTML: width = "100px"
+#+ATTR_ORG: :width 100
+[[./code_reuse_example.png]]
