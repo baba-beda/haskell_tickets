@@ -148,3 +148,30 @@ set.addAll(Arrays.asList("1", "2", "3"));
 #+ATTR_HTML: width = "100px"
 #+ATTR_ORG: :width 100
 [[./code_reuse_example.png]]
+Хотим использовать класс XUsefulShape из проекта X в проекте Y. Варианты действий:
+1) Перенести всю иерархию X в проект Y (при этом, возможно, часть функциональности будет дублироваться)
+2) Создать класс YUsefulShape, как копию XUsefulShape с точностью до замены X на Y.
+Таким образом, глубокие иерархии классов снижают code reuse. *Favor composition over inheritance*
+
+Для того, чтобы ООП не создавало проблем, структура классов должна удовлетворять следующим свойствам:
+1) Объекты должны быть по возможности неизменяемыми
+2) Иерархии наследования не должны быть глубокими
+3) Наследование реализации и переопределение методов использовать не нужно. 
+
+*Algebraic data types*
+ADT = OOP done right
+ООП:
+#+BEGIN_SRC java
+abstract class Shape ...
+class Circle extends Shape ...
+class Rectangle extends Shape ...
+class ComplexShape extends Shape ...
+#+END_SRC
+ADT:
+#+BEGIN_SRC haskell
+data Shape = Circle | Rectangle | ComplexShape
+#+END_SRC
+В ООП методы группируются по классам - в ADT подклассы группируются по методам (функциям).
+[[./oop_adt.png]]
+Из-за этого в ООП легко добавлять новые классы, не меняя код других классов; в ADT легко добавлять новые функции, не меняя код остальных функций. 
+** Сравнение Haskell и других функциональных языков
