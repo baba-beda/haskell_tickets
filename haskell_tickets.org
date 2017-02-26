@@ -9,7 +9,7 @@
 Позволяют скоратить и упростить запись алгоритмов обработки данных в коллекциях, причем из этих функций легко строить целые "конвейеры" обработки данных. (map, fold, filter, etc)
 #+BEGIN_SRC java
 out = new int[in.length];
-for (i = 0; i < in.length; i++) {
+for  expresion(i = 0; i < in.length; i++) {
     out[i] = in[i] * 2;
 }
 #+END_SRC
@@ -317,7 +317,7 @@ f (1+2) (3+4)
 для каждого типа дано свое определение (оператор + как пример).
 ** Базовый синтаксис (?)
 *** Списки
-[type]; конкатенация: ++ и l1:l2; String ~ [Char]
+[type]; конкатенация: ++ и l1:l2; String ~ [Char]  
 head, tail, last, init, drop, take, replicate
 zip/unzip/zipWith
 l !! i - элемент по номеру, работает за линию
@@ -328,11 +328,11 @@ l !! i - элемент по номеру, работает за линию
 #+END_SRC
 
 *** let и where
-`let` bindings `in` expression
-expresion `where` bindings
+~let~ bindings ~in~ expression
+expresion ~where~ bindings
 
 *** if
-`if` predicate `then` expression if true `else` expression if false
+~if~ predicate ~then~ expression if true ~else~ expression if false
 
 *** guards
 #+BEGIN_SRC haskell
