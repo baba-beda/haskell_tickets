@@ -15,7 +15,9 @@ for (i = 0; i < in.length; i++) {
 #+END_SRC
 #+BEGIN_SRC haskell
 out = map (\x -> x * 2) in
--- то же самое
+-- то жone hour ago
+Actions
+22 февраля я вышел с учёбы и отправился в 30-часовой непрекращающийся трип-тусу. Ну и конечно после этого хотелось написать длиннющуе самое
 out = map (*2) in
 #+END_SRC
 ** Статическая типизация
@@ -668,3 +670,33 @@ instance Monad Maybe where
 10. ifM
 11. (||^)
 * Ticket 7. Monads, part 2
+** Writer monad
+Хотим вести лог вычислений.
+#+BEGIN_SRC haskell
+binPow :: Int -> Int -> Int
+binPow 0 _      = 1
+binPow n a
+    | even n    = let b = binPow (n `div` 2) a in b * b
+    | otherwise = a * binPow (n - 1) a
+type IntWithLog = (Int, String)
+
+binPow :: Int -> Int -> IntWithLog
+binPow 0 _      = (1, "")
+binPow n a
+    | even n    = let (b, msg) = binPow (n `div` 2) a 
+                  in (b * b, msg ++ "Square " ++ show b ++ "\n")
+    | otherwise = let (b, msg) = binPow (n - 1) a
+                  in (a * b, msg ++ "Mul " ++ show a ++ " and " ++ show b ++ "\n")
+#+END_SRC
+#+BEGIN_SRC haskell
+newtype Writer w a = Writer { runWriter :: (a, w) } -- a is value, w is log
+
+instance Monoid w => Monad (Writer w) where
+    return a            = Writer (a, mempty)
+    Writer (x, v) >>= f = let Writer (y, v') = f x
+                          in Writer (y, v `mappend` v')
+
+tell       :: w -> Writer w ()
+execWriter :: Writer w a -> w
+writer     :: (a, w) -> Writer w a
+#+END_SRC
