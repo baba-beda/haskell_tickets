@@ -1,10 +1,23 @@
 * Ticket 1. Why FP and Haskell? 
 ** Основные идеи ФП:
-- Сборка мусора
-- Замыкания
-- Вывод типов [[type inference]]
-- Ленивая обработка (lazy evaluation) 
-- Функции высшего поряда
+- Сборка мусора :: появилась в LISP (1960)
+- Замыкания :: появились в Scheme (1975) 
+- Вывод типов ([[type inference]]) :: появился в ML (1979)
+- Ленивая обработка ([[Ленивость][lazy evaluation]]) :: появилась в Miranda (1985)
+- [[Функции высшего порядка]]
+** Функции высшего порядка
+Позволяют скоратить и упростить запись алгоритмов обработки данных в коллекциях, причем из этих функций легко строить целые "конвейеры" обработки данных. (map, fold, filter, etc)
+#+BEGIN_SRC java
+out = new int[in.length];
+for (i = 0; i < in.length; i++) {
+    out[i] = in[i] * 2;
+}
+#+END_SRC
+#+BEGIN_SRC haskell
+out = map (\x -> x * 2) in
+-- то же самое
+out = map (*2) in
+#+END_SRC
 ** Статическая типизация
 *** Деление языков
 - Языки с статической типизацией
@@ -18,7 +31,7 @@
 + Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 + Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 + Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-*** <<Type inference>>
+*** Type inference
 Статические языки слишком многословны
 #+BEGIN_SRC java
 List<T> replicate(int n, T elem) {
@@ -172,7 +185,7 @@ ADT:
 #+BEGIN_SRC haskell
 data Shape = Circle | Rectangle | ComplexShape
 #+END_SRC
-В ООП методы группируются по классам - в ADT подклассы группируются по методам (функциям).
+В ООП методы группируются по классам - в [[Algebraic Data Types][ADT]] подклассы группируются по методам (функциям).
 [[./oop_adt.png]]
 Из-за этого в ООП легко добавлять новые классы, не меняя код других классов; в ADT легко добавлять новые функции, не меняя код остальных функций. 
 ** Сравнение Haskell и других функциональных языков
@@ -246,3 +259,229 @@ f (1+2) (3+4)
 *** Перечислите основные парадигмы ФП и Haskell, отличительные особенности
 *** Укажите преимущества ленивых вычислений
 * Ticket 3. Datas, Classes, Instances
+** Types, Type variables, Type aliases
+*** Types
+У всего в Haskell есть тип.
+Базовые типы: Char, Bool, Int, Integer, Float, ...
+*** Type variables
+#+BEGIN_SRC haskell
+head :: [a] -> a
+fst :: (a, b) -> a
+#+END_SRC
+Функции, которые имеют переменные типов, называются *полиморфными функциями*.
+*** Type aliases
+#+BEGIN_SRC haskell
+type BinaryIntFunction = Int -> Int -> Int
+type String            = [Char]
+type PairList a b      = [(a, b)]
+#+END_SRC
+В Java такого нет. В C++:
+#+BEGIN_SRC c++
+typedef std::fucntion<int(int int)> binary_int_fucntion;
+#define int_vector std::vector<int>
+using str = std::string;
+#+END_SRC
+** Algebraic Data Types
+*** Тип-сумма
+ST = T_1 + T_2 + ... + T_n
+Java (special case): 
+#+BEGIN_SRC java
+public enum TrafficLight {
+    RED, YELLOW, GREEN, BLUE
+}
+#+END_SRC 
+C++ (also a special case):
+#+BEGIN_SRC c++ 
+union primitive_mess {
+    long x;
+    double y;
+};
+#+END_SRC
+*** Тип-произведение
+PT = T_1 \times T_2 \times ... \times T_n
+C++:
+#+BEGIN_SRC c++
+// user = int \times string \times string
+struct user {
+    int uid;
+    string login;
+    striin pass;
+};
+#+END_SRC
+*** ADT
+T ::= Int | Char | Double | ...
+ADT ::= T | ADT + ADT | ADT \times ADT
+**** Enums 
+#+BEGIN_SRC haskell 
+data TrafficLight = Red | Yellow | Green | Blue
+lightName :: TrafficLight -> String
+lightName Red    = "red"
+lightName Yellow = "yellow"
+-- ...
+#+END_SRC
+Например, Bool является примером enumeration.
+**** Structures
+#+BEGIN_SRC haskell
+data User = User Int String String
+getUid :: User -> Int
+getUid (User uid _ _) = uid
+-- ...
+#+END_SRC
+**** Parametric
+#+BEGIN_SRC haskell
+data Vector a = Vector2D a a | Vector3D a a a
+packVector :: Vector a -> [a]
+packVector (Vector2D x y)   = [x, y]
+packVector (Vector3D x y z) = [x, y, z]
+
+vecLen :: Vector Double -> Double
+vecLen = sqrt . sum . map (^2) . packVector
+#+END_SRC
+***** Maybe
+#+BEGIN_SRC haskell
+data Maybe a = Nothing | Just a
+#+END_SRC 
+***** Either
+#+BEGIN_SRC haskell
+data Either a b = Left a | Right b
+-- Left - обычно ошибка, Right - получившееся значение
+#+END_SRC 
+**** Recursive
+#+BEGIN_SRC haskell
+data List a = Nil | Cons a (List a)
+data [] a   = []  | a : [a]
+#+END_SRC 
+*** Record Syntax
+#+BEGIN_SRC haskell
+data User = User
+    { uid      :: Int
+    , login    :: String
+    , password :: String
+    }
+-- не более чем синтаксический сахар для этого:
+data User = User Int String String
+
+uid :: User -> Int
+uid (User i _ _) = i
+
+login :: User -> String
+login (User _ l _) = l
+
+password :: User -> String
+password (User _ _ p) = p
+#+END_SRC
+**** Record field patterns
+#+BEGIN_SRC haskell
+isIvan :: User -> BOOL
+isIvan User { login = userName } = userName == "Ivan"
+-- или
+isIvan User { login = "Ivan" } = True
+isIvan _                       = False
+#+END_SRC
+**** Record update syntax
+#+BEGIN_SRC haskell 
+cloneIvan :: User
+cloneIvan = ivan { uid = 2 }
+#+END_SRC
+**** Duplicate Record Fields? 
+#+BEGIN_SRC haskell
+data User  = User  { uid :: Int, login :: String }
+data Admin = Admin { aid :: Int, login :: String }
+login :: ???
+-- ограничение на названия полей
+-- обходится в GHC 8 c DuplicateRecordFiled
+data Person 
+    = User  { uid   :: Int,    login :: String } 
+    | Admin { login :: String, aid   :: Int    }
+login :: Person -> String  -- real implementation
+login (User  _ l) = l
+login (Admin l _) = l
+#+END_SRC
+** Type Classes
+*** Ad hoc polymorphis
+Ad-hoc \equiv "for this", "for this specific purpose"
+*Ad hoc polymorphism* is a kind of polymorphism in which polymorphic functions can be applied to arguments of different types, because a polymorphic function can denote a number of distinct and potentially heterogeneous implementations depending on the type of argument(s) to which it is applied. It is also known as function overloading or operator overloading. The term ad hoc in this context is not intended to be pejorative; it refers simply to the fact that this type of polymorphism is not a fundamental feature of the type system. (/from wikipedia/)
+#+BEGIN_SRC haskell
+class Printable p where
+    printMe :: p -> String
+
+data Foo = Foo
+
+instance Printable Foo where
+    printMe Foo = "Foo"
+#+END_SRC
+В Java - интерфейсы.
+*** Multiple constraints
+#+BEGIN_SRC haskell 
+class I a where
+    measure :: a -> Int -> Double
+
+class J a where
+    getParameter :: a -> Int
+
+doMeasure :: (I a, J a) => a -> Double
+doMeasure obj = measure obj $ getParameter obj
+#+END_SRC
+В Java:
+#+BEGIN_SRC java 
+public <T extends I & J> doubleDoMeasure(T obj) { ... }
+#+END_SRC
+*** Standard Type classes
+**** Eq
+Used for types that support _equality_ testing. The functions its members implement are (==) and (/=).
+**** Ord
+Used for type that have an _ordering_. Functions: (>), (<), (>=), (<=).
+Ord \subset Eq.
+#+BEGIN_SRC haskell
+data Ordering = LT | EQ | GT
+-- simplified version of Ord class
+class Eq a => Ord a where
+   compare              :: a -> a -> Ordering
+   (<), (<=), (>=), (>) :: a -> a -> Bool
+
+   compare x y
+        | x == y    =  EQ
+        | x <= y    =  LT
+        | otherwise =  GT
+
+   x <= y           =  compare x y /= GT
+   x <  y           =  compare x y == LT
+   x >= y           =  compare x y /= LT
+   x >  y           =  compare x y == GT
+#+END_SRC
+**** Show
+Members of this type class can be presented as _strings_.
+**** Read
+The ~read~ function _takes a string and returns a type_ which is a member of ~Read~.
+**** Enum
+Enum members are _sequentially ordered types_ - they can be enumerated. 
+{(), Bool, Char, Ordering, Int, Integer, Float, Double} \subset Enum
+**** Bounded
+Bounded members have _an upper and a lower bound_.
+{Int, Char, Bool, ()} \subset Bounded
+**** Num
+Its members have the property of being able to act like _numbers_.
+{Int, Integer, Float, Double} \subset Num
+**** Integral
+Includes only integral (_whole_) numbers: Int and Integer
+**** Floating
+Includes only _floating point_ numbers: Float and Double.
+*** deriving
+#+BEGIN_SRC haskell
+data TrafficLight = Red | Yellow | Green | Blue
+    deriving (Eq, Ord, Enum, Bounded, Show, Read)
+#+END_SRC 
+*** DatatypeContexts
+(It's better not to use it)
+#+BEGIN_SRC haskell
+data (Ord a) => OrderedList a = Nil | Node { value :: a, next :: OrderedList a }
+-- we want
+insert :: a -> OrderedList a -> OrderedList a
+-- but we can't
+#+END_SRC 
+** Возможные вопросы к билету
+*** Напишите, что такое DatatypeContexts? Приведите пример (не из презентации)
+*** Напишите тип следующей функции в наиболее общем виде: ~f a = map (* a) .map (uncurry (+)) . map (\x -> (x, x))~
+*** Напишите функцию с типом, которая принимает список пар чисел и оставляет только такие, что сумма чисел в паре четная. 
+*** Задан тип данных ~data Role a = A { name :: String, role :: a } | B { name :: String, roles :: [a] }~. Напишите конструкцию, синтаксическим сахаром для которой является данных Record Syntax.
+* Ticket 5. Monads, part 1
