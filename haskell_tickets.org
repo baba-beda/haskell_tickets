@@ -9,7 +9,7 @@
 Позволяют скоратить и упростить запись алгоритмов обработки данных в коллекциях, причем из этих функций легко строить целые "конвейеры" обработки данных. (map, fold, filter, etc)
 #+BEGIN_SRC java
 out = new int[in.length];
-for (i = 0; i < in.length; i++) {
+for  expresion(i = 0; i < in.length; i++) {
     out[i] = in[i] * 2;
 }
 #+END_SRC
@@ -192,6 +192,7 @@ data Shape = Circle | Rectangle | ComplexShape
 [[./images/oop_adt.png]]
 Из-за этого в ООП легко добавлять новые классы, не меняя код других классов; в ADT легко добавлять новые функции, не меняя код остальных функций. 
 ** Сравнение Haskell и других функциональных языков
+<<<<<<< Updated upstream
 *** Языки семейства ML
 Standard ML, OCaml, F#
 *Основные отличия от Haskell*:
@@ -285,6 +286,147 @@ f (1+2) (3+4)
 4. Нет зависимости от истории \Rightarrow нет зависимости от порядка вызова методов
 5. Безопасное хранение объекта в коллекции
 6. Не требуется синхронизация, так как все потоки только читают данные
+
+* Ticket 2: Basic syntax
+  
+Инструкции (statement) в императивных языках в Haskell являются выражениями (expression).
+** Функции   
+*** Объявить функцию
+#+BEGIN_SRC haskell
+  fun :: argType (-> argType)* -> resType
+#+END_SRC
+
+*** Определить функцию
+#+BEGIN_SRC haskell
+  fun arg1 arg2 argN = smth
+#+END_SRC
+
+*** Вызов функции
+#+BEGIN_SRC haskell
+  fun arg1 arg2 argN
+#+END_SRC
+
+** Параметрический полиморфизм
+#+BEGIN_SRC haskell
+  fun :: argType (-> argType)* -> resType
+  id  :: a -> a 
+#+END_SRC
+*Параметрический полиморфизм* - когда тип результата содержит одну или более
+(не связанных) /переменных типа/, так что значение может принимать любой тип,
+который получится от подстановки вместо этой переменной конкретного типа.
+
+*Ad-hoc полиморфизм* - когда результат может иметь различные типы, потому что
+для каждого типа дано свое определение (оператор + как пример).
+** Базовый синтаксис (?)
+*** Списки
+[type]; конкатенация: ++ и l1:l2; String ~ [Char]  
+head, tail, last, init, drop, take, replicate
+zip/unzip/zipWith
+l !! i - элемент по номеру, работает за линию
+
+*** Лямбды 
+#+BEGIN_SRC haskell
+  \x -> x * x
+#+END_SRC
+
+*** let и where
+~let~ bindings ~in~ expression
+expresion ~where~ bindings
+
+*** if
+~if~ predicate ~then~ expression if true ~else~ expression if false
+
+*** guards
+#+BEGIN_SRC haskell
+  fun x
+      | predicate1
+      | predicate2
+      | …
+      | otherwise (задефайнена как True)
+#+END_SRC
+
+*** case
+#+BEGIN_SRC haskell
+  fun x = case x of
+      0 -> “a”
+      1 -> “b”
+      _ -> “e”
+#+END_SRC
+
+** Еще функции
+*** Функции высшего порядка
+#+BEGIN_SRC haskell
+  apply :: Int -> Int -> (Int -> Int -> Int) -> Int
+  apply a b f = f a b
+
+  map    :: (a -> b) -> [a] -> [b]
+  filter    :: (a -> Bool) -> [a] -> [a]
+  foldr1  :: (a -> a -> a) -> [a] ->  a
+#+END_SRC
+
+Отличие foldr от foldr1 в том, что аккумулятором берется первый элемент
+ списка (выпадет в рантайме на пустом списке!)
+scanl/scanr - как foldl/foldr, только возвращают список всех промежуточных результатов
+
+#+BEGIN_SRC haskell
+  span   :: (a -> Bool)   -> [a] -> ([a], [a])
+
+  uncurry :: (a -> b -> c) -> (a, b) -> c
+  uncurry f (x, y) = f x y
+#+END_SRC
+
+*** Частичное применение функций:
+(реальный тип `Int -> (Int -> Int)`)
+#+BEGIN_SRC haskell
+  sum :: Int -> Int -> Int  
+  sum x y = x + y
+#+END_SRC
+
+*** flip
+#+BEGIN_SRC haskell
+  flip :: (a -> b -> c) -> b -> a -> c
+  flip f b a = f a b
+#+END_SRC
+
+*** Pattern matching
+#+BEGIN_SRC haskell
+  fact :: Integer -> Integer
+  fact 0 = 1
+  fact n = n * fact (n - 1)
+#+END_SRC
+
+*** Композиция функций
+#+BEGIN_SRC haskell
+  infixr 9 .
+  (.) :: (b -> c) -> (a -> b) -> a -> c -- композиция функций
+  f . g = \x -> f (g x)
+
+  infixr 0 $
+  ($) :: (a -> b) -> a -> b  -- применение функции
+  f $ x = f x
+#+END_SRC
+Понимать $ как “дальше следует последний аргумент к этой функции”
+Применение можно само по себе рассматривать как функцию (в духе map ($ 3) [(+1), odd, even])
+
+Point-free стиль: фокусирует внимание на функциях, а не на манипуляциях с данными
+ (каррирование + композиция. Point здесь - “точка” не как знак композиции, а в смысле топологии)
+
+** Всякое
+*** Range
+#+BEGIN_SRC haskell
+  [0 .. 5]     -- [0, 1, 2, 3, 4, 5]
+  [0, 2 .. 5]  -- [0, 2, 4]
+  [0..]        -- [0, 1, 2, 3, ...] : бесконечный список
+  [0, 2 ..]    -- [0, 2, 4, 6, ...] : все четные числа
+  [5, 4 .. 1]  -- [5, 4, 3, 2, 1]
+#+END_SRC
+
+*** List comprehension
+#+BEGIN_SRC haskell
+  [x | x <- [1..10], even x]  -- [2, 4, 6, 8, 10]
+  [x * y | x <- [1, 3, 5], y <- [2, 4, 6], x * y >= 10]  -- [12, 18, 10, 20, 30]
+#+END_SRC
+
 * Ticket 3. Datas, Classes, Instances
 ** Types, Type variables, Type aliases
 *** Types
@@ -537,6 +679,28 @@ evenPairs = filter (even . uncurry (+))
 #+BEGIN_SRC haskell
 data Role a = A String a | B String [a]
 #+END_SRC
+
+* Ticket 4: Kinda Monoids
+
+*** Record syntax
+#+BEGIN_SRC haskell
+  data Person = Person { firstName :: String  
+                       , lastName :: String  
+                       , age :: Int  
+                       , height :: Float  
+                       , phoneNumber :: String  
+                       , flavor :: String  
+                       } deriving (Show)   
+
+--Record field patterns
+isIvan :: User -> Bool
+isIvan User { login = userName } = userName == "Ivan"
+
+--Record update syntax
+cloneIvan :: User
+cloneIvan = ivan { uid = 2 }  -- User 2 "Ivan" "123"
+#+END_SRC
+
 * Ticket 5. Monads, part 1
 ** Объяснение на коробках 
 [[./images/monad_box.png]]
