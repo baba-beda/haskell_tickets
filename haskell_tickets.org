@@ -162,7 +162,7 @@ set.addAll(Arrays.asList("1", "2", "3"));
 **** Наследование и code reuse
 #+ATTR_HTML: width = "100px"
 #+ATTR_ORG: :width 100
-[[./code_reuse_example.png]]
+[[./images/code_reuse_example.png]]
 Хотим использовать класс XUsefulShape из проекта X в проекте Y. Варианты действий:
 1) Перенести всю иерархию X в проект Y (при этом, возможно, часть функциональности будет дублироваться)
 2) Создать класс YUsefulShape, как копию XUsefulShape с точностью до замены X на Y.
@@ -187,7 +187,7 @@ ADT:
 data Shape = Circle | Rectangle | ComplexShape
 #+END_SRC
 В ООП методы группируются по классам - в [[Algebraic Data Types][ADT]] подклассы группируются по методам (функциям).
-[[./oop_adt.png]]
+[[./images/oop_adt.png]]
 Из-за этого в ООП легко добавлять новые классы, не меняя код других классов; в ADT легко добавлять новые функции, не меняя код остальных функций. 
 ** Сравнение Haskell и других функциональных языков
 *** Языки семейства ML
@@ -537,7 +537,7 @@ data Role a = A String a | B String [a]
 #+END_SRC
 * Ticket 5. Monads, part 1
 ** Объяснение на коробках 
-[[./monad_box.png]]
+[[./images/monad_box.png]]
 ** Определение
 *Переменная* - контейнер для /данных/
 *Монада* - контейнер для /вычисления/
@@ -653,6 +653,8 @@ instance Monad Maybe where
 6. Identity
 7. Writer
 8. Reader
+9. RWS
+10. Cont
 *** Напишите не менее семи функций, полезных при работе с монадами
 1. return
 2. >>=
@@ -665,3 +667,4 @@ instance Monad Maybe where
 9. join
 10. ifM
 11. (||^)
+* Ticket 7. Monads, part 2
