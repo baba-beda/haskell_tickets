@@ -319,10 +319,10 @@ f (1+2) (3+4)
 для каждого типа дано свое определение (оператор + как пример).
 ** Базовый синтаксис (?)
 *** Списки
-[type]; конкатенация: ++ и l1:l2; String ~ [Char]  
-head, tail, last, init, drop, take, replicate
-zip/unzip/zipWith
-l !! i - элемент по номеру, работает за линию
+~[type]~; конкатенация: ~++~ и ~l1:l2~; String ~ [Char]  
+~head, tail, last, init, drop, take, replicate~
+~zip/unzip/zipWith~
+~l !! i~ - элемент по номеру, работает за линию
 
 *** Лямбды 
 #+BEGIN_SRC haskell
@@ -681,6 +681,28 @@ data Role a = A String a | B String [a]
 #+END_SRC
 
 * Ticket 4: Kinda Monoids
+** newtype
+  - Сделано для изоморфизма, например, если хотим переопределить какие-либо инстансы.
+  - ~newtype MyInt = MyInt Int~
+  - НО: Может иметь только один конструктор и принимать одну переменную.
+  - Теперь мы можем задерайвить нужные нам инстансы и переписать Ord (не дерайвя его есесна).
+  - Кроме того, newtype жрет меньше памяти, чем аналогичная data, а еще позволяет явно “именовать” аргументы у функций
+(вместо foo 10 20 будет foo (Size 10) (Time 20))
+
+** Phantom types
+  - Такие типы, в которых параметр слева не присутствует справа.
+  (формально - параметризованные типы, не использующие тип-параметр в определении, во)
+newtype Const a b = Const { getConst :: a }
+  - Нужно это для имения типа:
+    ~newtype Coin color = Coin { getCoin :: Int }~
+  - У коина теперь есть тип - цвет и есть значение внутри.
+  - из этого можно сделать чуть более наглядную вещь: 
+#+BEGIN_SRC haskell
+newtype Money currency = Money { amount :: Int }
+data Dollars = Dollars { cash :: Money Dollars }
+data Euro = Dollars {cash :: Money Euro }
+#+END_SRC
+типа запретили сравнивать разные валюты между собой
 
 *** Record syntax
 #+BEGIN_SRC haskell
@@ -833,6 +855,109 @@ instance Monad Maybe where
 9. join
 10. ifM
 11. (||^)
+* Ticket 6. Functors & Applicative
+** Functor
+Применяет функцию к значению в контексте
+#+BEGIN_SRC haskell
+  class Functor f where         -- f :: * -> *
+      fmap :: (a -> b) -> f a -> f b
+      (<$) :: a -> f b -> f a
+  instance Functor Maybe where
+      fmap f (Just x) = Just (f x)
+      fmap _ Nothing  = Nothing
+  (<$>) :: Functor f => (a -> b) -> f a -> f b
+  (<$>) = fmap
+#+END_SRC
+- ~fmap~ на ~[a]~ делает ~fmap~ к каждому элементу; если ~a~ - простой тип, то ~fmap = map~
+- arrow functor: объединяем функции
+#+BEGIN_SRC haskell
+  instance Functor ((-> r)) where
+    fmap = (.)
+
+  >let foo = fmap (+3) (+2)
+  >foo 10
+  15
+#+END_SRC
+- Bifunctor: функтор для коробочек с 2 элементами
+
+** Applicative
+#+BEGIN_SRC haskell
+  class Functor f => Applicative f where
+      pure  :: a -> f a
+      (<*>) :: f (a -> b) -> f a -> f b
+      (*>) :: f a -> f b -> f b
+      (<*) :: f a -> f b -> f a
+  instance Applicative Maybe where
+      pure = Just
+      Nothing <*> _         = Nothing
+      Just f  <*> something = fmap f something
+  instance Applicative [] where
+      pure x    = [x]
+      fs <*> xs = [f x | f <- fs, x <- xs]
+      -- декартово произведение функций и значений
+#+END_SRC
+- Функция в контексте, значение тоже в контексте, вытаскиваем и то,
+  и другое из коробочек, применяем, суем обратно в коробочку
+- arrow applicative
+#+BEGIN_SRC haskell
+  instance Applicative ((->) r) where
+    pure x = \_ -> x
+    f <*> g = \x -> f x (g x)
+#+END_SRC
+** Alternative
+- Берет два аппликатива и возвращает левый, если он не empty, иначе правый
+#+BEGIN_SRC haskell
+  class Applicative f => Alternative f where
+      empty :: f a
+      (<|>) :: f a -> f a -> f a
+  instance Alternative Maybe where
+      empty = Nothing
+      Nothing <|> r = r
+      l       <|> _ = l
+  ghci> Nothing <|> Just 3 <|> empty <|> Just 5
+  Just 3
+  instance Alternative [] where
+      empty = []
+      (<|>) = (++)
+  ghci> [] <|> [1,2,3] <|> [4]
+  [1,2,3,4]
+#+END_SRC
+- *guard*
+#+BEGIN_SRC haskell
+  guard           :: (Alternative f) => Bool -> f ()
+  guard True      =  pure ()
+  guard False     =  empty
+#+END_SRC
+** List comprehension syntax sugar
+#+BEGIN_SRC haskell
+  --Пишем так:
+  sweetPythags = [(x,y,z) | z <- [1..], x <- [1..z], y <- [x..z], x^2 + y^2 == z^2]
+  --На самом деле происходит так:
+  pythagsWithoutSugar =
+    [1..]  >>= \z ->
+    [1..z] >>= \x ->
+    [x..z] >>= \y ->
+    guard (x^2 + y^2 == z^2) >>
+    return (x, y, z)
+#+END_SRC
+** Traversable
+- Как *Foldable*, ходит по структуре, собирая значения в каждой точке, 
+  только сохраняет структуру
+#+BEGIN_SRC haskell
+  class (Functor t, Foldable t) => Traversable t where
+    traverse  :: Applicative f => (a -> f b) -> t a -> f (t b)
+    sequenceA :: Applicative f => t (f a) -> f (t a)
+#+END_SRC
+** Automatic deriving
+- GHC может сгенерировать инстансы автоматически (~... deriving Functor~)
+*** DeriveFunctor
+*** DeriveFoldable
+*** DeriveTraversable
+** Type hierarchy proposals
+*** AMP (Applicative/Monad proposal)
+*** FTP (Foldable/Traversable proposal)
+*** MRP (Monad of no return/>> proposal)
+*** MFP (MonadFail proposal)
 * Ticket 7. Monads, part 2
 ** Writer monad
 Хотим вести лог вычислений.
