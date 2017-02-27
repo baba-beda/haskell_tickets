@@ -977,6 +977,7 @@ binPow n a
     | otherwise = let (b, msg) = binPow (n - 1) a
                   in (a * b, msg ++ "Mul " ++ show a ++ " and " ++ show b ++ "\n")
 #+END_SRC
+*Writer monad*:
 #+BEGIN_SRC haskell
 newtype Writer w a = Writer { runWriter :: (a, w) } -- a is value, w is log
 
@@ -989,3 +990,212 @@ tell       :: w -> Writer w ()
 execWriter :: Writer w a -> w
 writer     :: (a, w) -> Writer w a
 #+END_SRC
+Воспользуемся ей для удобного лога:
+#+BEGIN_SRC haskell 
+binPow :: Int -> Int -> Writer String Int
+binPow 0 _      = return 1
+binPow n a
+    | even n    = binPow (n `div` 2) a >>= \b ->    
+                  tell ("Square " ++ show b ++ "\n") >>
+                  return (b * b)
+    | otherwise = binPow (n - 1) a >>= \b -> 
+                  tell ("Mul " ++ show a ++ " and " ++ show b ++ "\n") >>
+                  return (a * b)
+-- или так
+binPow n a
+    | even n    = binPow (n `div` 2) a >>= \b -> 
+                  writer (b * b, "Square " ++ show b ++ "\n")
+    | otherwise = binPow (n - 1) a >>= \b -> 
+                  writer (a * b, "Mul " ++ show a ++ " and " ++ show b ++ "\n")
+
+-- запуск:
+ghci> putStr $ execWriter $ binPow 3 2 >> binPow 3 7
+#+END_SRC
+** Reader monad
+Что делать, если функция хочет иметь представление об окружающей среде? Нужно передать ей контекст в качестве аргумента
+#+BEGIN_SRC haskell
+data Environment = Environment
+    { name    :: String
+    , ids     :: [Int]
+    , manager :: String -> String
+    }
+
+containsId :: Int -> Environment -> Bool
+containsId i env = i `elem` ids env
+
+safeCallManager :: Int -> Environment -> Maybe String
+safeCallManager i env = if containsId i env
+                        then Just $ manager env $ name env
+                        else Nothing
+#+END_SRC
+*Reader monad*:
+#+BEGIN_SRC haskell
+newtype Reader e a = Reader { runReader :: e -> a }
+ask   :: Reader e e
+asks  :: (e -> a) -> Reader e a
+local :: (e -> b) -> Reader b a -> Reader e a
+instance Monad (Reader e) where
+    return a = Reader $ \_ -> a
+    m >>= f  = Reader $ \r -> runReader (f $ runReader m r) r
+#+END_SRC
+Применим ее для ~Environment~:
+#+BEGIN_SRC haskell
+containsId :: Int -> Reader Environment Bool
+containsId i = asks (\env -> i `elem` ids env)
+
+safeCallManager :: Int -> Reader Environment (Maybe String)
+safeCallManager i = containsId i >>= \hasId -> 
+                    if hasId
+                    then asks (\env -> Just $ manager env $ name env)
+                    else return Nothing
+#+END_SRC
+** Typed holes
+#+BEGIN_SRC haskell
+foo :: a -> b
+foo x = _
+-- Found hole '_' with type: b
+bar :: [Int]
+bar = map _f ["aba", "caba"]
+-- Found hole '_f' with type: [Char] -> Int
+#+END_SRC
+** PartialTypeSignature
+#+BEGIN_SRC haskell
+{-# LANGUAGE PartialTypeSignatures #-}
+foo :: _ -> Bool
+foo x = not x
+
+Main.hs:3:8: warning: [-Wpartial-type-signatures]
+    • Found type wildcard ‘_’ standing for ‘Bool’
+    • In the type signature:
+        foo :: _ -> Bool
+    • Relevant bindings include
+        foo :: Bool -> Bool (bound at Main.hs:4:1)
+#+END_SRC
+** State monad
+Необходимо хранить изменяющееся по мере вычисления состояние.
+/Императивный/ стиль: изменить значение переменной
+/Функциональный/ стиль: создать новую переменную с новым значением
+Рассмотрим на примере стека:
+#+BEGIN_SRC haskell
+type Stack = [Int]
+
+pop  :: Stack -> (Int, Stack)
+push :: Int -> Stack -> Stack
+pop  :: Stack -> (Int, Stack)
+pop (x:xs) = (x, xs)
+
+push :: Int -> Stack -> Stack
+push x s = x:s
+pop  :: Stack -> (Int, Stack)
+pop (x:xs) = (x, xs)
+
+push :: Int -> Stack -> ((), Stack)
+push x s = ((), x:s)
+stackOps :: Stack -> (Int, Stack)
+stackOps s = let (x, xs)  = pop s
+                 (_, s')  = push 5 xs
+                 (_, res) = push 10 s'
+             in (x, res)
+#+END_SRC
+*State monad*:
+[[./images/state.png]]
+#+BEGIN_SRC haskell
+-- import Control.Monad.State
+newtype State s a = State { runState :: s -> (a, s) }
+instance Monad (State s) where
+    return a       = State $ \s -> (a, s)
+    oldState >>= f = State $ \s -> let (a, newState) = runState oldState s
+                                   in runState (f a) newState
+#+END_SRC
+Стек с использованием ~State~:
+#+BEGIN_SRC haskell
+type Stack = [Int]
+
+pop :: State Stack Int
+pop = state $ \(x:xs) -> (x, xs)
+
+push :: Int -> State Stack ()
+push x = state $ \xs -> ((), x:xs)
+
+stackOps :: State Stack Int
+stackOps = pop >>= \x -> push 5 >> push 10 >> return x
+#+END_SRC
+Полезные функции для ~State~:
+#+BEGIN_SRC haskell
+get       :: State s s
+put       :: s -> State s ()
+modify    :: (s -> s) -> State s ()
+gets      :: (s -> a) -> State s a
+withState :: (s -> s) -> State s a -> State s a
+evalState :: State s a -> s -> a
+execState :: State s a -> s -> s
+#+END_SRC
+** RWS monad
+#+BEGIN_SRC haskell
+newtype RWS r w s a = RWST { runRWS :: r -> s -> (a, s, w) }
+-- now
+runRWS  :: RWS r w s a -> r -> s -> (a, s, w)
+execRWS :: RWS r w s a -> r -> s -> (s, w)
+evalRWS :: RWS r w s a -> r -> s -> (a, w)
+#+END_SRC 
+/Пример/:
+#+BEGIN_SRC haskell
+import Control.Monad.RWS
+
+type R = Int
+type W = [Int]
+type S = Int
+
+computation :: RWS R W S ()
+computation = do
+    e <- ask
+    a <- get
+    let b = a + e
+    put b
+    tell [b]
+
+example = runRWS computation 2 3
+#+END_SRC
+** Continuation Passing Style
+#+BEGIN_SRC haskell
+add :: Int -> Int -> Int
+add x y = x + y
+
+addCPS :: Int -> Int -> (Int -> r) -> r
+addCPS x y onDone = onDone (x + y)
+
+onInput :: (String -> IO ()) -> IO ()  -- every callback framework
+onInput action = forever $ getLine >>= action
+#+END_SRC
+*** Cont data type
+#+BEGIN_SRC haskell
+
+newtype Cont r a = Cont { runCont :: (a -> r) -> r }
+
+cont :: ((a -> r) -> r) -> Cont r a
+#+END_SRC
+*** Cont Monad
+#+BEGIN_SRC haskell
+instance Monad (Cont r) where
+    return a       = Cont ($ a)
+    Cont arr >>= f = Cont $ \br -> arr $ \a -> runCont (f a) br
+#+END_SRC
+*** Достоинства CPS
++ Representation of program in compiler
++ Building coroutines
++ Introducing callbacks
++ Tail-recursive optimizations
++ Exception handling
+*** MonadCont
+#+BEGIN_SRC haskell
+class Monad m => MonadCont m where
+    callCC :: ((a -> m b) -> m a) -> m a  -- call-with-current-continuation
+instance MonadCont (Cont r) where
+    callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
+    callCC f = cont $ \c -> runCont (f (\x -> cont $ \_ -> c x)) c
+#+END_SRC
+** Возможные вопросы к билету
+*** Напишите определение типа данных Writer и его instance Monad
+*** Напишите определение типа данных Reader и его instance Monad
+*** Напишите определение типа данных State и его instance Monad
+*** Напишите определение типа данных Cont и его instance Monad
