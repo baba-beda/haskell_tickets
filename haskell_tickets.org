@@ -980,6 +980,7 @@ binPow n a
 *Writer monad*:
 #+BEGIN_SRC haskell
 newtype Writer w a = Writer { runWriter :: (a, w) } -- a is value, w is log
+-- Writer w a type is just a newtype wrapper for a tuple (a, w); just a reminder of what newtype is
 
 instance Monoid w => Monad (Writer w) where
     return a            = Writer (a, mempty)
@@ -990,6 +991,11 @@ tell       :: w -> Writer w ()
 execWriter :: Writer w a -> w
 writer     :: (a, w) -> Writer w a
 #+END_SRC
+(from learnyouahaskell):
+Now that our tuple is wrapped in the ~Writer~ ~newtype~, we have to unwrap it when pattern matching. We take the value ~x~ and apply the function ~f~ to it. This gives us a ~Writer w a~ value and we use a ~let~ expression to pattern match on it. We present ~y~ as the new result and use ~mappend~ to combine the old monoid value with the new one. We pack that up with the result value in a tuple and then wrap that with the ~Writer~ constructor so that our result is a ~Writer~ value instead of just an unwrapped tuple.
+
+Sometimes we just want some monoid value to be included at some particular point. For this, the ~tell~ function is useful. It's part of the ~MonadWriter~ type class and in the case of ~Writer~ it takes a monoid value, like ~["This is going on"]~ and creates a ~Writer~ value that presents the dummy value ~()~ as its result but has our desired monoid value attached. When we have a monadic value that has ~()~ as its result, we don't bind it to a variable.
+
 Воспользуемся ей для удобного лога:
 #+BEGIN_SRC haskell 
 binPow :: Int -> Int -> Writer String Int
