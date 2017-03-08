@@ -1086,6 +1086,93 @@ instance MonadCont (Cont r) where
     callCC f = cont $ \c -> runCont (f (\x -> cont $ \_ -> c x)) c
 #+END_SRC
 * Ticket 8: RealWorld
+** IO
+
+*IO* идет вразрез с концепцией чистоты Haskell. Никто не гарантирует, что два вызова одного
+и того же `getChar` дадут одинаковый результат. Компилятор считает все функции чистыми
+(кажется, это грязная ложь) и может соптимизировать "лишние" вызовы и вернуть один
+результат. 
+
+#+BEGIN_SRC haskell
+  getchar :: Char
+  get2chars = [getchar, getchar]
+#+END_SRC
+
+Порядок, в котором вернутся результаты, не определен в `getChar`.
+
+#+BEGIN_SRC haskell
+  getchar   :: Int -> Char
+  get2chars :: Int -> String
+ 
+  get2chars _ = [getchar 1, getchar 2]
+  -- У нас получились разные `getchar`, и мы точно сделаем их два раза.
+#+END_SRC
+
+#+BEGIN_SRC haskell
+  getchar :: Int -> (Char, Int)
+
+  get2chars _ = [a,b] where (a,i)  = getchar 1
+                            (b,_)  = getchar i
+  get2chars i = [a,b] where (a,i1) = getchar i
+                            (b,i2) = getchar i1
+  -- Теперь мы определились с порядком вызова
+  -- А что делать с get4chars = [get2chars 1, get2chars 2]?
+
+  get4chars = [get2chars 1, get2chars 2]
+
+  get4chars :: Int -> String
+  get4chars i0 = (a++b) where (a,i1) = get2chars i0
+                              (b,i2) = get2chars i1
+  -- Так оно и работает на самом деле
+#+END_SRC
+
+Какой в действительности тип у `main`?
+#+BEGIN_SRC haskell
+  type IO a  =  RealWorld -> (a, RealWorld)
+
+  main :: RealWorld -> ((), RealWorld)
+  main :: IO ()
+
+  getChar :: RealWorld -> (Char, RealWorld)
+ 
+  main :: RealWorld -> ((), RealWorld)
+  main world0 = 
+      let (a, world1) = getChar world0
+          (b, world2) = getChar world1
+      in ((), world2)
+
+  --    Can we skip getChar call?
+  --    Can we swap getChar calls?
+  --    Duplicate getChar calls?
+
+#+END_SRC
+
+Страшная правда об *IO*: 
+
+#+BEGIN_SRC haskell
+  newtype IO a = IO (State# RealWorld -> (# State# RealWorld, a #))
+
+  -- | @State\#@ is the primitive, unlifted type of states.  It has
+  --         one type parameter, thus @State\# RealWorld@, or @State\# s@,
+  --         where s is a type variable. The only purpose of the type parameter
+  --         is to keep different state threads separate.  It is represented by
+  --         nothing at all. 
+
+  data State# s
+
+  -- | @RealWorld@ is deeply magical.  It is /primitive/, but it is not
+  --         /unlifted/ (hence @ptrArg@).  We never manipulate values of type
+  --         @RealWorld@; it\'s only used in the type system, 
+  --         to parameterise @State\#@.
+
+  data RealWorld
+#+END_SRC
+
+То есть *RealWorld* сам по себе лучше не трогать, он служит, чтобы параметризовать
+*State#*.
+
+** `do` notation: desugaring `>>`
+
 * Ticket 9: Monad Transformers
 * Ticket 10: Speeding up Haskell
 * Ticket 11: Template Haskell and Lens
