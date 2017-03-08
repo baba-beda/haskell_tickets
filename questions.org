@@ -120,13 +120,19 @@ data Role a = A String a | B String [a]
 ** Question 3: Kinds
 *** TODO Приведите пример типа с kind'ом ~Constraint -> *~
 *** TODO Приведите пример типа с kind'ом ~(* -> Constraint) -> Constraint~
-*** TODO Приведите пример типа с kind'ом ~(* -> *) -> Constraint~
+*** DONE Приведите пример типа с kind'ом ~(* -> *) -> Constraint~
+~Monad, Functor, Applicative~
 *** TODO Приведите пример типа с kind'ом ~(* -> Constraint) -> *~
-*** TODO Укажите kind для ~Monad~
+*** DONE Приведите пример типа с kind'ом ~* -> Constraint~
+~Num, Ord, Eq, Show~
+*** DONE Укажите kind для ~Monad~
+~(* -> *) -> Constraint~
 *** TODO Укажите kind следующего типа данных: ~data A f g = B (f g) (g f)~
-*** TODO Укажите kind следующего типа данных: ~data A f g = B (f g Int)~
+*** DONE Укажите kind следующего типа данных: ~data A f g = B (f g Int)~
+~A :: (* -> * -> *) -> * -> *~
 *** TODO Укажите kind типа ~type C p = p Int => Int~
-*** TODO Укажите kind типа ~type C p = (p Int, p Double)~
+*** DONE Укажите kind типа ~type C p = (p Int, p Double)~
+~C :: (* -> *) -> *~
 ** Question 4: Type hierarchy
 *** Чему равно значение ~length (Left "hello")~ и почему?
 *** Чему равно значение ~length (Just [1..10])~ и почему?
