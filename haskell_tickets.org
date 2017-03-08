@@ -188,7 +188,6 @@ data Shape = Circle | Rectangle | ComplexShape
 [[./images/oop_adt.png]]
 Из-за этого в ООП легко добавлять новые классы, не меняя код других классов; в ADT легко добавлять новые функции, не меняя код остальных функций. 
 ** Сравнение Haskell и других функциональных языков
-<<<<<<< Updated upstream
 *** Языки семейства ML
 Standard ML, OCaml, F#
 *Основные отличия от Haskell*:
@@ -340,7 +339,6 @@ scanl/scanr - как foldl/foldr, только возвращают список
   uncurry :: (a -> b -> c) -> (a, b) -> c
   uncurry f (x, y) = f x y
 #+END_SRC
-
 *** Частичное применение функций:
 (реальный тип `Int -> (Int -> Int)`)
 #+BEGIN_SRC haskell
