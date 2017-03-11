@@ -1172,7 +1172,256 @@ instance MonadCont (Cont r) where
 *State#*.
 
 ** `do` notation: desugaring `>>`
+*** `(>>)` 
+заменяется на `do` в начале и \n в остальных случаях.
+#+BEGIN_SRC haskell
+  main = do putStrLn "What is your name?"
+            putStrLn "How old are you?"
+            putStrLn "Nice day!"
+  -- Превращается в
+  main = (putStrLn "What is your name?") >>
+         (putStrLn "How old are you?")   >>
+         (putStrLn "Nice day!")
+#+END_SRC
+*** `(>>=)` 
+сложнее в замене:
+#+BEGIN_SRC haskell
+  main = do s <- getLine
+            putStrLn s
+  -- Превращается в
+  main = getLine
+         >>= \s -> putStrLn s
+  main = getLine >>= putStrLn
+#+END_SRC
+*** `return`
+#+BEGIN_SRC haskell
+  return :: a -> IO a
+  return a world0 = (a, world0)
 
+  getReversedLine :: IO String
+  getReversedLine = do
+      s <- getLine
+      return $ reverse s
+#+END_SRC
+*** `let`:
+- в `let` нельзя делать ничего монадического
+- в `(<-)` можно делать только что-то монадическое
+** ApplicativeDo
+С `{-# LANGUAGE ApplicativeDo #-}` можно использовать `do` с аппликативами:
+#+BEGIN_SRC haskell
+  appPair :: Applicative f => f a -> f b -> f (a, b)
+  appPair a b = do
+      x <- a
+      y <- b
+      pure (x, y)
+  --Превращается в
+  (\x y -> (x, y)) <$> a <*> b
+  ghci> appPair (Just 3) (Just 4)
+  Just (3,4)
+#+END_SRC
+Это добавляет прозрачности коду.
+** RebindableSyntax
+С `{-# LANGUAGE RebindableSyntax #-}` можно спрятать что-нибудь базовое (вроде bind), переопределить эту функцию, и во время дешугаринга do-нотации компилятор будет использовать нашу реализацию. Не самое часто используемое расширение, но можно какие-то трюки делать.
+
+#+BEGIN_SRC haskell
+  {-# LANGUAGE RebindableSyntax #-}
+
+  import Prelude
+
+  addNumbers = do
+    80
+    60
+    10
+    where (>>) = (+)
+
+  ghci> addNumbers
+  150
+#+END_SRC
+** Mutable data
+*** IORef
+    Один объект
+#+BEGIN_SRC haskell
+  import Data.IORef
+  main = do varA <- newIORef 0 
+            a0   <- readIORef varA
+            writeIORef varA 1
+            a1   <- readIORef varA
+            print (a0, a1)
+
+  > (0, 1)
+#+END_SRC
+*** IOArray
+    Быстрые мутабельные массивы
+#+BEGIN_SRC haskell
+  import Data.Array.IO
+  main = do arr <- newArray (1,10) 37 :: IO (IOArray Int Int)
+            a   <- readArray arr 1
+            writeArray arr 1 64
+            b   <- readArray arr 1
+            print (a, b)
+
+  > (37,64)
+#+END_SRC
+** sequence_
+   Имеем массив действий `[IO()]` и хотим его выполнить. Для этого пригодится `sequence_`:
+#+BEGIN_SRC haskell
+  sequence_ :: [IO a] -> IO ()
+  sequence_ []     = return ()
+  sequence_ (x:xs) = do x
+                        sequence_ xs
+#+END_SRC
+** Exceptions
+*** throwIO
+#+BEGIN_SRC haskell
+  throwIO :: Exception e => e -> IO a
+
+  import           Control.Exception (ArithException (..), catch, throwIO)
+  import           Control.Monad     (when)
+
+  readAndDivide :: IO Int
+  readAndDivide = do
+      x <- readLn
+      y <- readLn
+      when (y == 0) $ throwIO DivideByZero
+      return $ x `div` y
+
+  ghci> readAndDivide 
+  7
+  3
+  2
+  ghci> readAndDivide 
+  3
+  0
+  ,*** Exception: divide by zero
+#+END_SRC
+*** catch
+#+BEGIN_SRC haskell
+  catch :: Exception e => IO a -> (e -> IO a) -> IO a
+
+  safeReadAndDivide :: IO Int
+  safeReadAndDivide = readAndDivide `catch` \DivideByZero -> return (-1)
+
+  ghci> safeReadAndDivide 
+  7
+  3
+  2
+  ghci> safeReadAndDivide 
+  3
+  0
+  -1
+#+END_SRC
+*** custom exceptions
+#+BEGIN_SRC haskell
+  {-# LANGUAGE DeriveAnyClass     #-}
+  {-# LANGUAGE DeriveDataTypeable #-}
+
+  import           Control.Exception (Exception)
+  import           Data.Typeable     (Typeable)
+
+  data MyException = DummyException
+      deriving (Show, Typeable, Exception)
+
+  ghci> throwIO DummyException
+  *** Exception: DummyException
+#+END_SRC
+*** try
+    Возвращает `Right` значение вычисления или `Left exception`, в зависимости от того что произошло в `(IO a)`
+#+BEGIN_SRC haskell
+  try     :: Exception e => IO a -> IO (Either e a)
+#+END_SRC
+*** tryJust
+    Делает как `try`, но только на определённых типах исключений, остальные он игнорирует и они идут выше
+#+BEGIN_SRC haskell
+  tryJust :: Exception e => (e -> Maybe b) -> IO a -> IO (Either b a)
+#+END_SRC
+*** finally
+    Принимает два `(IO a)`, если первое зафакапилось он выполнит второе, иначе всё равно второе
+#+BEGIN_SRC haskell
+  finally :: IO a	 -- computation to run first
+          -> IO b	 -- computation to run afterward (even if an exception was raised)
+          -> IO a
+
+  -- | Like 'finally', but only performs the final action 
+  -- if there was an exception raised by the computation.
+  onException :: IO a -> IO b -> IO a
+#+END_SRC
+*** bracket
+    3 действия: взять ресурс, что-то с ним сделать, отдать ресурс. Сделает первое и последнее в любом случае, и поднимет эксепшн, если он был.
+#+BEGIN_SRC haskell
+  bracket :: IO a         -- ^ computation to run first (\"acquire resource\")
+          -> (a -> IO b)  -- ^ computation to run last (\"release resource\")
+          -> (a -> IO c)  -- ^ computation to run in-between
+          -> IO c         -- returns the value from the in-between computation
+#+END_SRC
+** Unsafe
+   Печатаем (в основном в целях дебага) вне монады IO. То есть дебажим, например, Фибоначчи, и хочется какой-то debug output, но втаскивать ради этого IO кажется избыточным.
+*** unsafePerformIO
+#+BEGIN_SRC haskell
+  import System.IO.Unsafe
+
+  foo :: ()
+  foo = unsafePerformIO $ putStrLn "foo"
+#+END_SRC    
+*** unsafeInterleaveIO
+`do
+    before
+    unsafeInterleaveIO side
+    after`
+#+BEGIN_SRC haskell
+  unsafePerformIO :: IO a -> a
+  unsafeInterleaveIO :: IO a -> a
+#+END_SRC
+- Откладывает IO операцию, пока результат не потребуется (laziness вот это все). В остальном то же, что и unsafePerformIO. 
+- На совести программиста проверить, что x можно вызвать в любое время с одним и тем же результатом, если уж мы используем unsafeInterleaveIO x.
+
+- Хаскель в исполнении GHC - не чистый и не referentially transparent. В рантайме выполняются нечистые функции с сайд-эффектами, поэтому порядок вычислений на самом деле важен.
+- `unsafeInterleaveIO` опасен, потому что может добавить concurrency-багов даже в однотредовой программе из-за предыдущего пункта.
+- IO монада должна быть строгой, потому что безопасная и ленивая IO монада потребует "precise (lifted) representation of RealWorld", а это вроде как невозможно.
+- Не только IO монада и unsafe-функции опасны. Весь хаскель потенциально ансейф, и чистые функции в GHC-версии хаскеля чистые только по соглашению и разумности людей.
+
+*** Гайдлайны
+    - По возможности избегать unsafe.
+    - Если точно безопасно делать что-то только при вычислении (/кривая формулировка/), используем `unsafeInterleaveIO`. Стоит удостовериться, что нам пофиг на порядок исполнения этих эффектов относительно IO и относительно остальных вызовов unsafePerformIO.
+    - Если находимся вне IO монады или если допустимо выполнить действие до всех остальных IO-действий, используем `unsafePerformIO`.
+    - unsafePerformIO еще и не type-safe. Код ниже сломается:
+
+#+BEGIN_SRC haskell
+  test :: IORef [a]
+  test = unsafePerformIO $ newIORef []
+
+  main = do
+          writeIORef test [42]
+          bang <- readIORef test
+          print (bang :: [Char])
+#+END_SRC
+** Efficient String representations
+   По дефолту String = [Char], но это можно изменить (перегрузить)
+#+BEGIN_SRC haskell
+{-# LANGUAGE OverloadedStrings #-}
+
+class IsString a where
+    fromString :: String -> a
+#+END_SRC
+*** Data.Text
+#+BEGIN_SRC haskell
+-- From pack
+myTStr1 :: T.Text
+myTStr1 = T.pack ("foo" :: String)
+-- From overloaded string literal.
+myTStr2 :: T.Text
+myTStr2 = "bar"
+#+END_SRC
+*** Data.ByteString
+#+BEGIN_SRC haskell
+  -- From pack
+  bstr1 :: S.ByteString
+  bstr1 = S.pack ("foo" :: String)
+  -- From overloaded string literal.
+  bstr2 :: S8.ByteString
+  bstr2 = "bar"
+#+END_SRC
+*** Backpack
+    Система, которая будет в GHC 8.2
 * Ticket 9: Monad Transformers
 * Ticket 10: Speeding up Haskell
 * Ticket 11: Template Haskell and Lens
