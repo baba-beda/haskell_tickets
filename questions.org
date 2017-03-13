@@ -157,12 +157,34 @@ type P a = a Int => Int
 ~C :: (* -> *) -> *~
 ** Question 4: Type hierarchy
 *** Чему равно значение ~length (Left "hello")~ и почему?
+0
 *** Чему равно значение ~length (Just [1..10])~ и почему?
+1
 *** Напишите type class ~Traversable~
 *** Напишите реализацию ~Traversable~ для списка
-*** Напишите реализацию ~Traversable~ для ~Maybe~ 
+#+BEGIN_SRC haskell
+instance Traversable [] where
+    {-# INLINE traverse #-} -- so that traverse can fuse
+    traverse f = List.foldr cons_f (pure [])
+      where cons_f x ys = (:) <$> f x <*> ys
+#+END_SRC
+*** Напишите реализацию ~Traversable~ для ~Maybe~
+#+BEGIN_SRC haskell
+instance Traversable Maybe where
+    traverse _ Nothing = pure Nothing
+    traverse f (Just x) = Just <$> f x
+#+END_SRC
 *** Напишите реализацию ~Traversable~ для ~Either~
-*** Напишите реализацию ~Foldable~ для списка 
+#+BEGIN_SRC haskell
+instance Traversable (Either a) where
+    traverse _ (Left x) = pure (Left x)
+    traverse f (Right y) = Right <$> f y
+#+END_SRC
+*** Напишите реализацию ~Foldable~ для списка
+#+BEGIN_SRC haskell
+instance Foldable [] where
+    foldr = List.foldr
+#+END_SRC
 *** Напишите реализацию ~Foldable~ для ~Maybe~
 #+BEGIN_SRC haskell
 instance Foldable Maybe where
@@ -173,6 +195,11 @@ instance Foldable Maybe where
     foldl f z (Just x) = f z x~
 #+END_SRC
 *** Напишите реализацию ~Foldable~ для ~Either~
+#+BEGIN_SRC haskell
+instance Foldable (Either a) where
+    foldMap _ (Left _) = mempty
+    foldMap f (Right y) = f y
+#+END_SRC
 *** Напишите, что делают эти расширения языка: ~TypeSynonyms, MultiParamTypeClasses, ViewPatterns, RecordsWildCards~
 *** Реализуйте ~traverse~ через ~sequence~.
 *** Реализуйте ~sequence~ через ~traverse~.
