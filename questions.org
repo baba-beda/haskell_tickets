@@ -1,7 +1,7 @@
-* Вопросы по темам 
+* Вопросы по темам
 ** [5/5]Question 1: Intro
 *** DONE Перечислите основные парадигмы ФП и Haskell, отличительные особенности
-1. FP: 
+1. FP:
    1. Иммутабельность
    2. Чистота
    3. Статическая типизация и вывод типов
@@ -12,7 +12,7 @@
    3. Type classes
 *** DONE Укажите преимущества чистоты
 1. Есть referential transparency \Rightarrow есть бОльшие возможности для оптимизации
-2. Проще делить программу на независимые модули и отлаживать их по отдельности (\approx один модуль - одна функция) 
+2. Проще делить программу на независимые модули и отлаживать их по отдельности (\approx один модуль - одна функция)
 3. Чистые фукнции проще объединять в композиции, так как между ними нет неявных связей в виде изменяемого состояния
 4. Чисто функциональные программы проще сделать паралgit@github.com:baba-beda/haskell_tickets.gitлельными
 *** DONE Укажите преимущества ленивых вычислений
@@ -32,12 +32,16 @@
 2. Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 3. Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 4. Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-** [13/16]Question 2: Basic Syntax
+** [14/16]Question 2: Basic Syntax
 *** TODO Имеется класс типов: ~class C a where maxInt :: Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
-*** TODO Как обновить ~f~ в ~data A = A { f :: Int -> Int }; c = A { b = (+1) }~?
-*** DONE Что дает слово "*deriving*"? Что это в языке Haskell? 
-~deriving~ позволяет неявно определять функции стандартных ~typeclass~'ов. Детали такой неявной реализации иногда зависят от компилятора. 
+*** DONE Как обновить ~f~ в ~data A = A { f :: Int -> Int }~
+#+BEGIN_SRC haskell
+changeF :: A \rightarrow Int \rightarrow Int
+changeF A { f = _ } fff = A { f = fff }
+#+END_SRC
+*** DONE Что дает слово "*deriving*"? Что это в языке Haskell?
+~deriving~ позволяет неявно определять функции стандартных ~typeclass~'ов. Детали такой неявной реализации иногда зависят от компилятора.
 *** DONE Напишите реализацию ~foldr~ и ~foldl~. И нарисуйте картинку вычисления
 ~foldr~:
 [[./images/foldr.png]]
@@ -55,7 +59,7 @@ foldl f z (x:xs) = foldl (f z x) xs
 #+END_SRC
 *** DONE Синтаксическим сахаром для какого кода является объявление следующего типа данных: ~data MyData = A { f :: Int, g :: Int -> Double }~
 #+BEGIN_SRC haskell
-data MyData = A Int (Int -> Double) 
+data MyData = A Int (Int -> Double)
 #+END_SRC
 *** DONE Напишите тип выражения ~flip id~.
 #+BEGIN_SRC haskell
@@ -75,13 +79,13 @@ flip id :: b -> (b -> c) -> c
 #+BEGIN_SRC haskell
 -- left arg
 (.) :: (b1 -> c1) -> (a1 -> b1) -> a1 -> c1
--- right arg 
+-- right arg
 (.) :: (b2 -> c2) -> (a2 -> b2) -> a2 -> c2
 -- b ≡ b1 -> c1 ≡ ((a2 -> b2) -> (a2 -> c2)); c ≡ (a1 -> b1) -> (a1 -> c1)
--- a ≡ b2 -> c2 
+-- a ≡ b2 -> c2
 ((.) . (.)) :: (b2 -> c2) -> (a1 -> a2 -> b2) -> (a1 -> a2 -> c2)
 #+END_SRC
-*** DONE Имеется тип данных ~data A a = B { f :: Double }~. Укажите тип ~f~.    
+*** DONE Имеется тип данных ~data A a = B { f :: Double }~. Укажите тип ~f~.
 #+BEGIN_SRC haskell
 f :: A a -> Double
 #+END_SRC
@@ -89,13 +93,13 @@ f :: A a -> Double
 ~newtype~ гарантирует, что данные будут иметь такой же вид в рантайме, как и завернутый тип. То есть Конструктор для ~newtype~ гарантированно стирается во время компиляции.
 ~data~ объявляет абсолютно новую структуру данных в рантайме.
 *** DONE Что такое "*Currying* (каррирование)" и *функции высшего порядка*?
-*Каррирование* Вычисление функции, принимающей несколько аргументов, через несколько функций, принимающих один аргумент. 
+*Каррирование* Вычисление функции, принимающей несколько аргументов, через несколько функций, принимающих один аргумент.
 Например, для функции 2-х аргументов h:(A \times B) \to C оператор каррирования \Lambda выполняет преобразование \Lambda(h):A \to (B \to C). То есть \Lambda: ((A \times B) \to C) \to (A \to (B \to C)).
 #+BEGIN_SRC haskell
 curry :: ((a, b) -> c) -> a -> b -> c
 uncurry :: (a -> b -> c) -> (a, b) -> c
 #+END_SRC
-*Функции высшего порядка* Функции, принимающие в качестве аргументов другие функции или возвращающие другие функции в качестве результата. 
+*Функции высшего порядка* Функции, принимающие в качестве аргументов другие функции или возвращающие другие функции в качестве результата.
 #+BEGIN_SRC haskell
 map :: (a -> b) -> [a] -> [b]
 filter :: (a -> Bool) -> [a] -> [a]
@@ -120,35 +124,37 @@ getVal :: Eq a => Foo a -> a
 getVal (Constr x) = x
 #+END_SRC
 *** DONE Напишите тип следующей функции в наиболее общем виде: ~f a = map (* a) . map (uncurry (+)) . map (\x -> (x, x))~
-#+BEGIN_SRC haskell 
+#+BEGIN_SRC haskell
 f :: Num a => a -> [a] -> [a]
 #+END_SRC
 *** DONE Напишите функцию с типом, которая принимает список пар чисел и оставляет только такие, что сумма чисел в паре четная.
 #+BEGIN_SRC haskell
 evenPairs :: (Integral a) :: [(a, a)] -> [(a, a)]
 evenPairs = filter (even . uncurry (+))
-#+END_SRC 
+#+END_SRC
 *** DONE Задан тип данных ~data Role a = A { name :: String, role :: a } | B { name :: String, roles :: [a] }~. Напишите конструкцию, синтаксическим сахаром для которой является данных Record Syntax.
 #+BEGIN_SRC haskell
 data Role a = A String a | B String [a]
 #+END_SRC
-** [/]Question 3: Kinds
-*** TODO Приведите пример типа с kind'ом ~Constraint -> *~
+** [10/10]Question 3: Kinds
+*** DONE Приведите пример типа с kind'ом ~Constraint -> *~
 #+BEGIN_SRC haskell
 type P a = a => Int
 #+END_SRC
-*** TODO Приведите пример типа с kind'ом ~(* -> Constraint) -> Constraint~
+*** DONE Приведите пример типа с kind'ом ~(* -> Constraint) -> Constraint~
+Не существует, наверное (или я нуб)
 *** DONE Приведите пример типа с kind'ом ~(* -> *) -> Constraint~
 ~Monad, Functor, Applicative~
-*** TODO Приведите пример типа с kind'ом ~(* -> Constraint) -> *~
-#+BEGIN_SRC haskell 
+*** DONE Приведите пример типа с kind'ом ~(* -> Constraint) -> *~
+#+BEGIN_SRC haskell
 type P a = a Int => Int
 #+END_SRC
 *** DONE Приведите пример типа с kind'ом ~* -> Constraint~
 ~Num, Ord, Eq, Show~
 *** DONE Укажите kind для ~Monad~
 ~(* -> *) -> Constraint~
-*** TODO Укажите kind следующего типа данных: ~data A f g = B (f g) (g f)~
+*** DONE Укажите kind следующего типа данных: ~data A f g = B (f g) (g f)~
+Не существует
 *** DONE Укажите kind следующего типа данных: ~data A f g = B (f g Int)~
 ~A :: (* -> * -> *) -> * -> *~
 *** DONE Укажите kind типа ~type C p = p Int => Int~
@@ -207,7 +213,7 @@ instance Foldable (Either a) where
 *** Укажите *minimal complete definition* для type class'а ~Traversable~
 ** Question 5: Functors
 *** Напишите законы *функтора*
-*** Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~ 
+*** Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~
 *** Напишите класс типов ~Bifunctor~ и реализуйте его для пары
 *** Напишите класс типов ~Bifunctor~ и реализуйте его для ~Either~
 *** Реализуйте ~fmap~ через ~bind~
@@ -226,9 +232,9 @@ liftAA2 = liftA2 . liftA2
 *** Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
 *** Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
 *** Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
-** Question 7: Monads
-*** Что такое монада?
-Монады применяют функции, которые возвращают завернутые значения, к завернутому знаению.
+** [13/16]Question 7: Monads
+*** DONE Что такое монада?
+Монады применяют функции, которые возвращают завернутые значения, к завернутому значению.
 #+BEGIN_SRC haskell
 class Monad m where   -- m :: * -> *
     return :: a -> m a                  -- return
@@ -239,8 +245,8 @@ class Monad m where   -- m :: * -> *
 f =<< x = x >>= f
 infixl 1  >>, >>=
 infixr 1  =<<
-#+END_SRC 
-*** Напишите не меньше пяти типов данных, являющихся монадой
+#+END_SRC
+*** DONE Напишите не меньше пяти типов данных, являющихся монадой
 1. []
 2. Maybe
 3. Either
@@ -251,7 +257,7 @@ infixr 1  =<<
 8. Reader
 9. RWS
 10. Cont
-*** Напишите не менее семи функций, полезных при работе с монадами
+*** DONE Напишите не менее семи функций, полезных при работе с монадами
 1. return
 2. >>=
 3. =<<
@@ -263,11 +269,33 @@ infixr 1  =<<
 9. join
 10. ifM
 11. (||^)
-*** Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
-*** Напишите тип функции ~join~ и приведите несколько примеров использования
-*** Реализуйте ~join~ через ~bind~.
-*** Напишите реализацию ~Monad~ для списка
-*** Напишите реализацию ~Monad~ для ~Maybe~
+*** DONE Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
+~unsafeInterleaveIO~ дает дополнительные гарантии на порядок операций, идейно так реализовано:
+#+BEGIN_SRC haskell
+do
+    before
+    unsafeInterleaveIO side
+    after
+#+END_SRC
+Гарантируется, что то, что в ~side~ всегда выполнится после ~before~.
+~unsafePerformIO~ таких гарантий не дает.
+*** DONE Напишите тип функции ~join~ и приведите несколько примеров использования
+#+BEGIN_SRC haskell
+join :: (Monad m) \Rightarrow m (m a) \rightarrow m a
+#+END_SRC
+~join [[1,2],[3,4]] === [1,2,3,4]~
+~join Just (Just 5) === Just 5~
+*** DONE Реализуйте ~join~ через ~bind~.
+#+BEGIN_SRC haskell
+join x = x >>= id
+#+END_SRC
+*** DONE Напишите реализацию ~Monad~ для списка
+#+BEGIN_SRC haskell
+instance Monad [] where
+    return x = [x]
+    l >>= f = concat (map f l)
+#+END_SRC
+*** DONE Напишите реализацию ~Monad~ для ~Maybe~
 #+BEGIN_SRC haskell
 data Maybe a = Nothing | Just a
 
@@ -275,46 +303,146 @@ instance Monad Maybe where
     return = Just
     Nothing >>= _ = Nothing
     Just a  >>= f = f a
-#+END_SRC 
-*** Напишите реализацию ~Monad~ для ~Either~
-*** Напишите определение типа данных ~Writer~ и его ~instance Monad~
-*** Напишите определение типа данных ~Reader~ и его ~instance Monad~
-*** Напишите определение типа данных ~State~ и его ~instance Monad~
-*** Напишите определение типа данных ~Cont~ и его ~instance Monad~
-*** Что такое ~IO~? Как теоретически это реализовано? 
-*** Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
-*** Напишите тип ~(>=>)~ и смысл этого оператора.
-** Question 8: Trans
-*** Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
-*** Напишите класс типов ~MonadTrans~ и реализуйте его для ~WriterT~
-*** Напишите класс типов ~MonadTrans~ и реализуйте его для ~MaybeT~
-*** Напишите класс типов ~MonadTrans~ и реализуйте его для ~ReaderT~
-*** Напишите тип ~StateT~ и то, как определен ~State~ через ~StateT~
-*** Напишите тип ~MaybeT~ и реализуйте его инстанс ~Monad~
-*** Нарисуйте табличку отличий обычных типов и их трансформеров для известных вам трансформеров
-** Question 9: Strict Lazy
-*** Что такое *irrefutable patterns* и зачем они нужны?
-*** Что такое *Stream Fusion* и зачем он нужен?
-*** Напишите, что значит тип ~ST~ и напишите основные функции по работе с ним
-*** Что такое ~BangPatterns~? Когда их нужно использовать? 
-*** Укажите, что делает ~deepseq~ и как.
-*** В чем разница между ~seq~ и ~deepseq~?
-*** В чем разница между ~seq~ и ~BangPatterns~?
-*** Что такое ~STRef~ и в чем отличие от ~IORef~?
-*** Что такое *Deforestation*?
-*** Чем плохо использовать ~IORef~ и ~IOArray~? Зачем нужны ~STRef~ и ~STArray~?
-** Question 10: TemplateHaskell
-*** Как можно посмотреть *AST-дерево* для выражения в Haskell?
-*** Напишите не меньше трех применений *TemplateHaskell*
-*** Что такое ~Q~ в типах функций Template Haskell?
-*** В чем разница между ~[| |]~ и ~$()~?
+#+END_SRC
+*** DONE Напишите реализацию ~Monad~ для ~Either~
+#+BEGIN_SRC haskell
+instance Monad (Either a) where
+    return = Right
+    Left l >>= _ = Left l
+    Right r >>= f = f r
+#+END_SRC
+*** DONE Напишите определение типа данных ~Writer~ и его ~instance Monad~
+#+BEGIN_SRC haskell
+newtype Writer w a = Writer { runWriter :: (a, w) } -- a - значение, w - лог
+
+instance Monoid m => Monad (Writer w) where
+    return a = Writer (a, mempty)
+    Writer (x, v) >>= f = let Writer (y, v') = f x
+                          in Writer (y, v `mappend` v')
+#+END_SRC
+*** DONE Напишите определение типа данных ~Reader~ и его ~instance Monad~
+#+BEGIN_SRC haskell
+newtype Reader e a = Reader { runReader :: e \rightarrow a }
+
+instance Monad (Reader e) where
+    return a = Reader $ \_ \rightarrow a
+    m >>= f = Reader $ \r \rightarrow runReader (f $ runReader m r)  r
+#+END_SRC
+*** DONE Напишите определение типа данных ~State~ и его ~instance Monad~
+#+BEGIN_SRC haskell
+newtype State s a = State { runState :: s \rightarrow (a, s) }
+
+instance Monad (State s) where
+    return a = State $ \s \rightarrow (a, s)
+    oldState >>= f = State $ \s \rightarrow let (a, newState) = runState oldState s
+                                  in runState (f a) newState
+#+END_SRC
+*** DONE Напишите определение типа данных ~Cont~ и его ~instance Monad~
+#+BEGIN_SRC haskell
+newtype Cont r a = Cont { runCont :: (a \rightarrow r) \rightarrow r }
+
+instance Monad (Cont r) where
+    return a = Cont ($ a)
+    Cont arr >>= f = Cont $ \br \rightarrow arr $ \a \rightarrow runCont (f a) br
+#+END_SRC
+*** TODO Что такое ~IO~? Как теоретически это реализовано?
+*** TODO Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
+*** TODO Напишите тип ~(>=>)~ и смысл этого оператора.
+** [7/7]Question 8: Trans
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
+#+BEGIN_SRC haskell
+class MonadTrans t where
+    lift :: Monad m \Rightarrow m a \rightarrow t m a
+
+newtype StateT s m a = StateT { runStateT :: (s \rightarrow m (a, s)) }
+
+instance MonadTrans (StateT s) where
+    lift c = StateT $ \s \rightarrow c >>= (\x \rightarrow return (x, s))
+#+END_SRC
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~WriterT~
+#+BEGIN_SRC haskell
+class MonadTrans t where
+    lift :: Monad m \Rightarrow m a \rightarrow t m a
+
+newtype WriterT w m a = WriterT { runWriterT :: m (a, w) }
+
+instance Monoid m \Rightarrow MonadTrans (WriterT w) where
+    lift m = WriterT $ do
+                       a \leftarrow m
+                       return (a, mempty)
+#+END_SRC
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~MaybeT~
+#+BEGIN_SRC haskell
+class MonadTrans t where
+    lift :: Monad m \Rightarrow m a \rightarrow t m a
+
+newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
+
+instance MonadTrans MaybeT where
+    lift m = MaybeT $ do
+                      a \leftarrow m
+                      return $ Just a
+#+END_SRC
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~ReaderT~
+#+BEGIN_SRC haskell
+class MonadTrans t where
+    lift :: Monad m \Rightarrow m a \rightarrow t m a
+
+newtype ReaderT e m a = ReaderT { runReaderT :: e \rightarrow m a }
+
+instance MonadTrans (ReaderT e) where
+    lift m = ReaderT (const m)
+#+END_SRC
+*** DONE Напишите тип ~StateT~ и то, как определен ~State~ через ~StateT~
+#+BEGIN_SRC haskell
+newtype StateT s m a = StateT { runStateT :: (s \rightarrow m (a, s)) }
+
+type State s = StateT s Identity
+#+END_SRC
+*** DONE Напишите тип ~MaybeT~ и реализуйте его инстанс ~Monad~
+#+BEGIN_SRC haskell
+newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
+
+instance Monad m \Rightarrow Monad (MaybeT m) where
+    return x = MaybeT $ return $ Just x
+    MaybeT action >>= f = MaybeT $ do
+                                   result \leftarrow action
+                                   case result of
+                                       Nothing \rightarrow return Nothing
+                                       Just x \rightarrow runMaybeT $ f x
+#+END_SRC
+*** DONE Нарисуйте табличку отличий обычных типов и их трансформеров для известных вам трансформеров
+| Base monad | Transformer | Original type | Combined type   |
+|------------+-------------+---------------+-----------------|
+| Maybe      | MaybeT      | Maybe a       | m (Maybe a)     |
+| Either     | EitherT     | Either a b    | m (Either a b)  |
+| Writer     | WriterT     | (a, w)        | m (a, w)        |
+| Reader     | ReaderT     | r \rightarrow a         | r \rightarrow m a         |
+| State      | StateT      | s \rightarrow (a, s)    | s \rightarrow m (a, s)    |
+| Cont       | ContT       | (a \rightarrow r) \rightarrow r   | (a \rightarrow m r) \rightarrow m r |
+** [0/10]Question 9: Strict Lazy
+*** TODO Что такое *irrefutable patterns* и зачем они нужны?
+*** TODO Что такое *Stream Fusion* и зачем он нужен?
+*** TODO Напишите, что значит тип ~ST~ и напишите основные функции по работе с ним
+*** TODO Что такое ~BangPatterns~? Когда их нужно использовать?
+*** TODO Укажите, что делает ~deepseq~ и как.
+*** TODO В чем разница между ~seq~ и ~deepseq~?
+*** TODO В чем разница между ~seq~ и ~BangPatterns~?
+*** TODO Что такое ~STRef~ и в чем отличие от ~IORef~?
+*** TODO Что такое *Deforestation*?
+*** TODO Чем плохо использовать ~IORef~ и ~IOArray~? Зачем нужны ~STRef~ и ~STArray~?
+** [0/4]Question 10: TemplateHaskell
+*** TODO Как можно посмотреть *AST-дерево* для выражения в Haskell?
+*** TODO Напишите не меньше трех применений *TemplateHaskell*
+*** TODO Что такое ~Q~ в типах функций Template Haskell?
+*** TODO В чем разница между ~[| |]~ и ~$()~?
 ** [3/10]Question 11: Lenses
 *** TODO Что такое изоморфизм (~Iso~)?
 *** TODO Чем линзы отличаются от призм?
 *** DONE Напишите тип ~Iso~
 #+BEGIN_SRC haskell
 type Iso s t a b = forall p f. (Profunctor p, Functor f) => p a (f b) -> p s (f t)
-#+END_SRC 
+#+END_SRC
 *** DONE Напишите тип функции ~from~ для ~Iso~
 #+BEGIN_SRC haskell
 from :: AnIso s t a b -> Iso b a t s
@@ -325,20 +453,21 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 #+END_SRC
 *** TODO Напишите реализацию ~over~
 *** TODO Реализуйте ~set~ через ~over~
-*** TODO Реализуйте ~over~ через ~view~ и ~set~. 
+*** TODO Реализуйте ~over~ через ~view~ и ~set~.
 *** TODO Напишите функцию ~lens~, которая принимает геттер и сеттер и возвращает линзу
 *** TODO Укажите операторные обозначений функций ~view~, ~set~, ~over~. Есть ли отличие в типах функций и их операторных выражений?
-** Question 12: Threads
-*** Что такое ~STM~ (коротко), что позволяет делать и какие есть функции по работе с ним?
-*** В чем отличие Haskell потоков от, например, потоков в Java?
-*** Что такое ~Strategy~? Перечислите несколько стратегий и реализуйте некоторые. Зачем они нужны?
-*** Как в Haskell обстоят дела с *DeadLock*'ами?
-*** Что такое *RTS*?
-*** Укажите несколько полезных опций *RTS*
-*** Опишите, что такое ~MVar~, зачем он может быть нужен и несколько функций по работе с этим объектом.
-*** Что делает ~forkIO~? Чем он отличается от ~forkFinally~?
-** Question 13: forall
+** [0/8]Question 12: Threads
+*** TODO Что такое ~STM~ (коротко), что позволяет делать и какие есть функции по работе с ним?
+*** TODO В чем отличие Haskell потоков от, например, потоков в Java?
+*** TODO Что такое ~Strategy~? Перечислите несколько стратегий и реализуйте некоторые. Зачем они нужны?
+*** TODO Как в Haskell обстоят дела с *DeadLock*'ами?
+*** TODO Что такое *RTS*?
+*** TODO Укажите несколько полезных опций *RTS*
+*** TODO Опишите, что такое ~MVar~, зачем он может быть нужен и несколько функций по работе с этим объектом.
+*** TODO Что делает ~forkIO~? Чем он отличается от ~forkFinally~?
+** [5/5]Question 13: forall
 *** DONE Напишите, как иметь список объектов разных функторов, внутри каждого из которых значения одинакового типа, чтобы иметь возможность применить функции из этого значения в другое?
+CLOSED: [2017-03-14 вт 01:03]
 #+BEGIN_SRC haskell
 data FunctorBox a = forall f . Functor f => FB (f a)
 FB :: forall {a} {f :: * -> *} . Functor f => f a -> FunctorBox a -- as ghci sees it
@@ -351,7 +480,7 @@ fmapFB f = \(FB a) -> FB (f <$> a)
 *** DONE Зачем нужно расширение языка ~-XExplicitForall~?
 Чтобы явно аннотировать типы с использованием ~forall~
 *** DONE В чем разница между ~-XRank2Types~ и ~-XRankNTypes~? Зачем нужны оба?
-~-XRank2Types~ разрешает полиморфные типы ранга 2, ~-XRankNTypes~ разрешает полиморфные типы любого ранга. 
+~-XRank2Types~ разрешает полиморфные типы ранга 2, ~-XRankNTypes~ разрешает полиморфные типы любого ранга.
 В системах с полиморфными типами ранга 2 задача вывода типов разрешима, если же ранг > 2, то задача становится неразрешимо и возникает необходимость явной аннотации типов. С этим и связана необходимость разделения этих расширений языка.
 *** DONE Зачем нужно расширение языка ~-XScopedTypeVariables~ и как оно взаимодействует с ~forall~?
 Позволяет указывать, что переменные типа из сигнатуры распространяются на тело функции. Чтобы это работало, надо использовать ~forall~ в сигнатуре:
@@ -370,7 +499,7 @@ fmapFB f = \(FB a) -> FB (f <$> a)
             nubbedList = nub inputList
   -- /show
 #+END_SRC
-** Question 14: Advanced types
+** [4/5]Question 14: Advanced types
 *** DONE Что такое *typed holes* и зачем они нужны?
 С их помощью можно спросить у компилятора, какого типа должно быть твое что-то.
 #+BEGIN_SRC haskell
@@ -405,24 +534,24 @@ class Mult a b c | a b -> c where
   (*) :: a -> b -> c
 #+END_SRC
 Классический (и единственный) пример использования - перемножение матриц/векторов/скаляров, тайпкласс указан выше.
-** Question 15: Comonads
-*** Напишите пример использования *комонад* 
-*** Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
-*** Напишите, какие комонады двойственны монадам ~Traced, Store, Env~
-*** Напишите комонаду ~Stream~ и инстанс ~Comonad~ для нее.
-*** Напишите комонаду ~Env~ и инстанс ~Comonad~ для нее.
-*** Напишите комонаду ~Store~ и инстанс ~Comonad~ для нее.
-*** Напишите комонаду ~Traced~ и инстанс ~Comonad~ для нее.
-*** Реализуйте ~instance Comonad~ для обычного ~Zipper~
-*** ~IO~ использует абстракцию монад, какой аналог есть в мире комонад?
-*** Напишите класс ~ComonadTrans~
-*** Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
-** Question 16: Idris
-*** Реализуйте функцию ~take~ для вектора на Idris
-*** Реализуйте функцию ~filter~ для вектора на Idris
-*** Реализуйте функцию ~head~ для списка на Idris, которая компилируется только с гарантированно непустыми списками.
-*** Напишите тип "*зависимая пара*" на Idris
-*** Что такое ~[| |]~-идиома в Idris?
-*** Что такое ~!~-идиома в Idris?
-*** Что такое ~_|_-eliminator~? Зачем это надо?
-*** Что такое "*тотальность*" и какие преимущества она дает? 
+** [0/11]Question 15: Comonads
+*** TODO Напишите пример использования *комонад*
+*** TODO Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
+*** TODO Напишите, какие комонады двойственны монадам ~Traced, Store, Env~
+*** TODO Напишите комонаду ~Stream~ и инстанс ~Comonad~ для нее.
+*** TODO Напишите комонаду ~Env~ и инстанс ~Comonad~ для нее.
+*** TODO Напишите комонаду ~Store~ и инстанс ~Comonad~ для нее.
+*** TODO Напишите комонаду ~Traced~ и инстанс ~Comonad~ для нее.
+*** TODO Реализуйте ~instance Comonad~ для обычного ~Zipper~
+*** TODO ~IO~ использует абстракцию монад, какой аналог есть в мире комонад?
+*** TODO Напишите класс ~ComonadTrans~
+*** TODO Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
+** [0/8]Question 16: Idris
+*** TODO Реализуйте функцию ~take~ для вектора на Idris
+*** TODO Реализуйте функцию ~filter~ для вектора на Idris
+*** TODO Реализуйте функцию ~head~ для списка на Idris, которая компилируется только с гарантированно непустыми списками.
+*** TODO Напишите тип "*зависимая пара*" на Idris
+*** TODO Что такое ~[| |]~-идиома в Idris?
+*** TODO Что такое ~!~-идиома в Idris?
+*** TODO Что такое ~_|_-eliminator~? Зачем это надо?
+*** TODO Что такое "*тотальность*" и какие преимущества она дает?
