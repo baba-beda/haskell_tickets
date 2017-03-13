@@ -1,5 +1,5 @@
 * Вопросы по темам 
-** Question 1: Intro
+** [5/5]Question 1: Intro
 *** DONE Перечислите основные парадигмы ФП и Haskell, отличительные особенности
 1. FP: 
    1. Иммутабельность
@@ -32,7 +32,7 @@
 2. Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 3. Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 4. Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-** Question 2: Basic Syntax
+** [13/16]Question 2: Basic Syntax
 *** TODO Имеется класс типов: ~class C a where maxInt :: Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Как обновить ~f~ в ~data A = A { f :: Int -> Int }; c = A { b = (+1) }~?
@@ -132,7 +132,7 @@ evenPairs = filter (even . uncurry (+))
 #+BEGIN_SRC haskell
 data Role a = A String a | B String [a]
 #+END_SRC
-** Question 3: Kinds
+** [/]Question 3: Kinds
 *** TODO Приведите пример типа с kind'ом ~Constraint -> *~
 #+BEGIN_SRC haskell
 type P a = a => Int
@@ -151,7 +151,8 @@ type P a = a Int => Int
 *** TODO Укажите kind следующего типа данных: ~data A f g = B (f g) (g f)~
 *** DONE Укажите kind следующего типа данных: ~data A f g = B (f g Int)~
 ~A :: (* -> * -> *) -> * -> *~
-*** TODO Укажите kind типа ~type C p = p Int => Int~
+*** DONE Укажите kind типа ~type C p = p Int => Int~
+~C :: (* -> Constraint) -> *~
 *** DONE Укажите kind типа ~type C p = (p Int, p Double)~
 ~C :: (* -> *) -> *~
 ** Question 4: Type hierarchy
