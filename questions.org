@@ -164,6 +164,14 @@ type P a = a Int => Int
 *** Напишите реализацию ~Traversable~ для ~Either~
 *** Напишите реализацию ~Foldable~ для списка 
 *** Напишите реализацию ~Foldable~ для ~Maybe~
+#+BEGIN_SRC haskell
+instance Foldable Maybe where
+    foldr _ z Nothing = z
+    foldr f z (Just x) = f x z
+
+    foldl _ z Nothing = z
+    foldl f z (Just x) = f z x~
+#+END_SRC
 *** Напишите реализацию ~Foldable~ для ~Either~
 *** Напишите, что делают эти расширения языка: ~TypeSynonyms, MultiParamTypeClasses, ViewPatterns, RecordsWildCards~
 *** Реализуйте ~traverse~ через ~sequence~.
@@ -180,7 +188,14 @@ type P a = a Int => Int
 *** Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
 *** Напишите type class ~Applicative~ и его реализацию для ~ZipList~
 *** Реализуйте функцию ~liftA3~
+#+BEGIN_SRC haskell
+liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
+liftA3 f a b c = fmap f a <*> b <*> c
+#+END_SRC
 *** Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
+#+BEGIN_SRC haskell
+liftAA2 = liftA2 . liftA2
+#+END_SRC
 *** Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
 *** Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
 *** Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
