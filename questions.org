@@ -161,77 +161,94 @@ type P a = a Int => Int
 ~C :: (* -> Constraint) -> *~
 *** DONE Укажите kind типа ~type C p = (p Int, p Double)~
 ~C :: (* -> *) -> *~
-** Question 4: Type hierarchy
-*** Чему равно значение ~length (Left "hello")~ и почему?
-0
-*** Чему равно значение ~length (Just [1..10])~ и почему?
-1
-*** Напишите type class ~Traversable~
-*** Напишите реализацию ~Traversable~ для списка
+** [13/14]Question 4: Type hierarchy
+*** DONE Чему равно значение ~length (Left "hello")~ и почему?
+~0~, потому что левая ветка в ~Either~ отвечает за ошибки и реализация в ~Left~
+по умолчанию выдает ~0~.
+*** DONE Чему равно значение ~length (Just [1..10])~ и почему?
+~length~ для ~Just _~ логичным образом равен ~1~.
+*** DONE Напишите type class ~Traversable~
+#+BEGIN_SRC haskell
+class (Functor t, Foldable t) \Rightarrow Traversable t where
+    traverse :: Applicative f \Rightarrow (a \rightarrow f b) \rightarrow t a \rightarrow f (t b)
+    traverse f = sequenceA . fmap f
+    sequenceA :: Applicative f \Rightarrow t (f a) \rightarrow f (t a)
+    sequenceA = traverse id
+    mapM :: Monad m \Rightarrow (a \rightarrow m b) \rightarrow t a \rightarrow m (t b)
+    mapM = traverse
+    sequence :: Monad m \Rightarrow t (m a) \rightarrow m (t a)
+    sequence = sequenceA
+#+END_SRC
+*** DONE Напишите реализацию ~Traversable~ для списка
 #+BEGIN_SRC haskell
 instance Traversable [] where
-    {-# INLINE traverse #-} -- so that traverse can fuse
-    traverse f = List.foldr cons_f (pure [])
-      where cons_f x ys = (:) <$> f x <*> ys
+    traverse f = foldr consF (pure [])
+      where
+        consF x ys =(:) <$> f x <*> ys
 #+END_SRC
-*** Напишите реализацию ~Traversable~ для ~Maybe~
+*** DONE Напишите реализацию ~Traversable~ для ~Maybe~
 #+BEGIN_SRC haskell
 instance Traversable Maybe where
     traverse _ Nothing = pure Nothing
     traverse f (Just x) = Just <$> f x
 #+END_SRC
-*** Напишите реализацию ~Traversable~ для ~Either~
+*** DONE Напишите реализацию ~Traversable~ для ~Either~
 #+BEGIN_SRC haskell
 instance Traversable (Either a) where
     traverse _ (Left x) = pure (Left x)
     traverse f (Right y) = Right <$> f y
 #+END_SRC
-*** Напишите реализацию ~Foldable~ для списка
+*** DONE Напишите реализацию ~Foldable~ для списка
 #+BEGIN_SRC haskell
 instance Foldable [] where
     foldr = List.foldr
 #+END_SRC
-*** Напишите реализацию ~Foldable~ для ~Maybe~
+*** DONE Напишите реализацию ~Foldable~ для ~Maybe~
 #+BEGIN_SRC haskell
 instance Foldable Maybe where
     foldr _ z Nothing = z
     foldr f z (Just x) = f x z
-
-    foldl _ z Nothing = z
-    foldl f z (Just x) = f z x~
 #+END_SRC
-*** Напишите реализацию ~Foldable~ для ~Either~
+*** DONE Напишите реализацию ~Foldable~ для ~Either~
 #+BEGIN_SRC haskell
 instance Foldable (Either a) where
     foldMap _ (Left _) = mempty
     foldMap f (Right y) = f y
 #+END_SRC
-*** Напишите, что делают эти расширения языка: ~TypeSynonyms, MultiParamTypeClasses, ViewPatterns, RecordsWildCards~
-*** Реализуйте ~traverse~ через ~sequence~.
-*** Реализуйте ~sequence~ через ~traverse~.
-*** Укажите *minimal complete definition* для type class'а ~Foldable~
-*** Укажите *minimal complete definition* для type class'а ~Traversable~
-** Question 5: Functors
-*** Напишите законы *функтора*
-*** Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~
-*** Напишите класс типов ~Bifunctor~ и реализуйте его для пары
-*** Напишите класс типов ~Bifunctor~ и реализуйте его для ~Either~
-*** Реализуйте ~fmap~ через ~bind~
-** Question 6: Applicatives
-*** Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
-*** Напишите type class ~Applicative~ и его реализацию для ~ZipList~
-*** Реализуйте функцию ~liftA3~
+*** TODO Напишите, что делают эти расширения языка: ~TypeSynonyms, MultiParamTypeClasses, ViewPatterns, RecordsWildCards~
+*** DONE Реализуйте ~traverse~ через ~sequence~.
+#+BEGIN_SRC haskell
+traverse f = sequenceA . fmap f
+#+END_SRC
+*** DONE Реализуйте ~sequence~ через ~traverse~.
+#+BEGIN_SRC haskell
+sequenceA = traverse id
+#+END_SRC
+*** DONE Укажите *minimal complete definition* для type class'а ~Foldable~
+~foldr~ или ~foldMap~.
+*** DONE Укажите *minimal complete definition* для type class'а ~Traversable~
+~traverse~ или ~sequenceA~.
+** [0/5]Question 5: Functors
+*** TODO Напишите законы *функтора*
+*** TODO Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~
+*** TODO Напишите класс типов ~Bifunctor~ и реализуйте его для пары
+*** TODO Напишите класс типов ~Bifunctor~ и реализуйте его для ~Either~
+*** TODO Реализуйте ~fmap~ через ~bind~
+** [2/7]Question 6: Applicatives
+*** TODO Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
+*** TODO Напишите type class ~Applicative~ и его реализацию для ~ZipList~
+*** DONE Реализуйте функцию ~liftA3~
 #+BEGIN_SRC haskell
 liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
 liftA3 f a b c = fmap f a <*> b <*> c
 #+END_SRC
-*** Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
+*** DONE Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
 #+BEGIN_SRC haskell
 liftAA2 = liftA2 . liftA2
 #+END_SRC
-*** Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
-*** Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
-*** Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
+*** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
+*** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
+*** TODO Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
 ** [13/16]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому значению.
