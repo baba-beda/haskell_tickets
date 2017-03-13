@@ -155,7 +155,7 @@ type P a = a Int => Int
 ~C :: (* -> Constraint) -> *~
 *** DONE Укажите kind типа ~type C p = (p Int, p Double)~
 ~C :: (* -> *) -> *~
-** [6/14]Question 4: Type hierarchy
+** [9/14]Question 4: Type hierarchy
 *** DONE Чему равно значение ~length (Left "hello")~ и почему?
 0
 #+BEGIN_SRC haskell
@@ -167,7 +167,13 @@ length = foldr (\_ n -> 1 + n) 0
 #+BEGIN_SRC haskell
 class (Functor t, Foldable t) => Traversable t where
   traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
+  traverse f = sequenceA . fmap f
   sequenceA :: Applicative f => t (f a) -> f (t a)
+  sequenceA = traverse id
+  mapM :: Monad m => (a -> m b) -> t a -> m (t b)
+  mapM = traverse
+  sequence :: Monad m => t (m a) -> m (t a)
+  sequence = sequenceA
 #+END_SRC
 *** TODO Напишите реализацию ~Traversable~ для списка
 *** TODO Напишите реализацию ~Traversable~ для ~Maybe~ 
@@ -178,10 +184,26 @@ instance Foldable [] where
     foldMap _ []     = mempty
     foldMap f (x:xs) = f x <> foldMap f xs
 #+END_SRC
-*** TODO Напишите реализацию ~Foldable~ для ~Maybe~
-*** TODO Напишите реализацию ~Foldable~ для ~Either~
+*** DONE Напишите реализацию ~Foldable~ для ~Maybe~
+#+BEGIN_SRC haskell
+instance Foldable Maybe where 
+    foldr f zero Nothing = zero  
+    foldr f zero (Just x) = f x zero 
+#+END_SRC
+*** DONE Напишите реализацию ~Foldable~ для ~Either~
+#+BEGIN_SRC haskell
+instance Foldable Either where 
+    foldr f zero Left = zero  
+    foldr f zero (Right x) = f x zero 
+#+END_SRC
+
 *** TODO Напишите, что делают эти расширения языка: ~TypeSynonyms, MultiParamTypeClasses, ViewPatterns, RecordsWildCards~
-*** TODO Реализуйте ~traverse~ через ~sequence~.
+*** DONE Реализуйте ~traverse~ через ~sequence~.
+#+BEGIN_SRC haskell
+traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
+sequence :: Monad m => t (m a) -> m (t a)
+traverse f = sequence . fmap f
+#+END_SRC
 *** TODO Реализуйте ~sequence~ через ~traverse~.
 *** DONE Укажите *minimal complete definition* для type class'а ~Foldable~
     foldMap | foldr
@@ -212,16 +234,16 @@ instance Bifunctor Either where
     bimap _ g (Right b) = Right (g b)
 #+END_SRC
 *** TODO Реализуйте ~fmap~ через ~bind~
-** Question 6: Applicatives
-*** Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
-*** Напишите type class ~Applicative~ и его реализацию для ~ZipList~
-*** Реализуйте функцию ~liftA3~
-*** Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
-*** Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
-*** Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
-*** Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
-** Question 7: Monads
-*** Что такое монада?
+** [0/7]Question 6: Applicatives
+*** TODO Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
+*** TODO Напишите type class ~Applicative~ и его реализацию для ~ZipList~
+*** TODO Реализуйте функцию ~liftA3~
+*** TODO Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
+*** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
+*** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
+*** TODO Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
+** [5/16]Question 7: Monads
+*** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому знаению.
 #+BEGIN_SRC haskell
 class Monad m where   -- m :: * -> *
@@ -234,7 +256,7 @@ f =<< x = x >>= f
 infixl 1  >>, >>=
 infixr 1  =<<
 #+END_SRC 
-*** Напишите не меньше пяти типов данных, являющихся монадой
+*** DONE Напишите не меньше пяти типов данных, являющихся монадой
 1. []
 2. Maybe
 3. Either
@@ -245,7 +267,7 @@ infixr 1  =<<
 8. Reader
 9. RWS
 10. Cont
-*** Напишите не менее семи функций, полезных при работе с монадами
+*** DONE Напишите не менее семи функций, полезных при работе с монадами
 1. return
 2. >>=
 3. =<<
@@ -257,11 +279,11 @@ infixr 1  =<<
 9. join
 10. ifM
 11. (||^)
-*** Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
-*** Напишите тип функции ~join~ и приведите несколько примеров использования
-*** Реализуйте ~join~ через ~bind~.
-*** Напишите реализацию ~Monad~ для списка
-*** Напишите реализацию ~Monad~ для ~Maybe~
+*** TODO Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
+*** TODO Напишите тип функции ~join~ и приведите несколько примеров использования
+*** TODO Реализуйте ~join~ через ~bind~.
+*** TODO Напишите реализацию ~Monad~ для списка
+*** DONE Напишите реализацию ~Monad~ для ~Maybe~
 #+BEGIN_SRC haskell
 data Maybe a = Nothing | Just a
 
@@ -270,14 +292,18 @@ instance Monad Maybe where
     Nothing >>= _ = Nothing
     Just a  >>= f = f a
 #+END_SRC 
-*** Напишите реализацию ~Monad~ для ~Either~
-*** Напишите определение типа данных ~Writer~ и его ~instance Monad~
-*** Напишите определение типа данных ~Reader~ и его ~instance Monad~
-*** Напишите определение типа данных ~State~ и его ~instance Monad~
-*** Напишите определение типа данных ~Cont~ и его ~instance Monad~
-*** Что такое ~IO~? Как теоретически это реализовано? 
-*** Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
-*** Напишите тип ~(>=>)~ и смысл этого оператора.
+*** TODO Напишите реализацию ~Monad~ для ~Either~
+*** TODO Напишите определение типа данных ~Writer~ и его ~instance Monad~
+*** TODO Напишите определение типа данных ~Reader~ и его ~instance Monad~
+*** TODO Напишите определение типа данных ~State~ и его ~instance Monad~
+*** TODO Напишите определение типа данных ~Cont~ и его ~instance Monad~
+*** TODO Что такое ~IO~? Как теоретически это реализовано? 
+*** TODO Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
+*** DONE Напишите тип ~(>=>)~ и смысл этого оператора.
+#+BEGIN_SRC haskell
+(>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
+#+END_SRC
+композиция монад?
 ** Question 8: Trans
 *** Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
 *** Напишите класс типов ~MonadTrans~ и реализуйте его для ~WriterT~
