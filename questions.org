@@ -293,13 +293,58 @@ instance Monad Maybe where
 *** DONE В чем разница между ~-XRank2Types~ и ~-XRankNTypes~? Зачем нужны оба?
 ~-XRank2Types~ разрешает полиморфные типы ранга 2, ~-XRankNTypes~ разрешает полиморфные типы любого ранга. 
 В системах с полиморфными типами ранга 2 задача вывода типов разрешима, если же ранг > 2, то задача становится неразрешимо и возникает необходимость явной аннотации типов. С этим и связана необходимость разделения этих расширений языка.
-*** TODO Зачем нужно расширение языка ~-XScopedTypeVariables~ и как оно взаимодействует с ~forall~?
+*** DONE Зачем нужно расширение языка ~-XScopedTypeVariables~ и как оно взаимодействует с ~forall~?
+Позволяет указывать, что переменные типа из сигнатуры распространяются на тело функции. Чтобы это работало, надо использовать ~forall~ в сигнатуре:
+#+BEGIN_SRC haskell
+  {-# LANGUAGE ScopedTypeVariables #-}
+  import Data.List
+
+  main = putStrLn "No errors."
+
+  -- show
+  myFunction :: forall a. Ord a => [a] -> [(a, a)]
+  myFunction inputList = zip sortedList nubbedList
+      where sortedList :: [a]
+            sortedList = sort inputList
+            nubbedList :: [a]
+            nubbedList = nub inputList
+  -- /show
+#+END_SRC
 ** Question 14: Advanced types
-*** TODO Что такое *typed holes* и зачем они нужны?
-*** TODO Зачем нужно расширение языка ~-XTypeApplications~?
-*** TODO Зачем нужно расширение языка ~-XPartialSignatures~?
+*** DONE Что такое *typed holes* и зачем они нужны?
+С их помощью можно спросить у компилятора, какого типа должно быть твое что-то.
+#+BEGIN_SRC haskell
+  mfold :: [Maybe a] -> [Either a b]
+  mfold = foldr _f _z
+
+  > Found hole ‘_f’ with type: Maybe a -> [Either a b] -> [Either a b]
+  > Found hole ‘_z’ with type: [Either a b]
+#+END_SRC
+*** DONE Зачем нужно расширение языка ~-XTypeApplications~?
+Позволяет задавать явные аргументы типов полиморфной функции, например ~map @Int @Bool isEven xs~. Решает проблему show/read, потому что мы явно задаем типы и все тайпчекается.
+#+BEGIN_SRC haskell
+  answer_read = show (read @Int "3") -- "3" :: String
+  answer_show = show @Integer (read "5") -- "5" :: String
+  answer_showread = show @Int (read @Int "7") -- "7" :: String
+#+END_SRC
+*** DONE Зачем нужно расширение языка ~-XPartialSignatures~?
+Аналог typed holes для сигнатур функций:
+#+BEGIN_SRC haskell
+  arbitCs :: _ => a -> String
+  arbitCs x = show (succ x) ++ show (x == x)
+  Main.hs:6:12: warning: [-Wpartial-type-signatures]
+      Found constraint wildcard ‘_’ standing for ‘(Show a, Eq a, Enum a)’
+      In the type signature:
+        arbitCs :: _ => a -> String
+#+END_SRC
 *** TODO Можно ли создать следующий тип данных в Haskell: ~data a : > b = (a -> b) : > (b -> a)~?
-*** TODO Что такое *Functional Dependencies*? Назовите какой-нибудь известный вам type class, в котором присутствуют функциональные зависимости.
+*** DONE Что такое *Functional Dependencies*? Назовите какой-нибудь известный вам type class, в котором присутствуют функциональные зависимости.
+Функциональные зависимости используются для ограничения параметров тайпклассов. Они позволяют объявить, что в тайпклассе с несколькими параметрами один из параметров можно *однозначно!* определить по другим.
+#+BEGIN_SRC haskell
+class Mult a b c | a b -> c where
+  (*) :: a -> b -> c
+#+END_SRC
+Классический (и единственный) пример использования - перемножение матриц/векторов/скаляров, тайпкласс указан выше.
 ** Question 15: Comonads
 *** Напишите пример использования *комонад* 
 *** Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
