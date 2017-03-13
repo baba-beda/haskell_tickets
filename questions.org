@@ -168,8 +168,6 @@ length = foldr (\_ n -> 1 + n) 0
 class (Functor t, Foldable t) => Traversable t where
   traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
   sequenceA :: Applicative f => t (f a) -> f (t a)
-  mapM :: Monad m => (a -> m b) -> t a -> m (t b)
-  sequence :: Monad m => t (m a) -> m (t a)
 #+END_SRC
 *** TODO Напишите реализацию ~Traversable~ для списка
 *** TODO Напишите реализацию ~Traversable~ для ~Maybe~ 
@@ -189,12 +187,31 @@ instance Foldable [] where
     foldMap | foldr
 *** DONE Укажите *minimal complete definition* для type class'а ~Traversable~
     traverse | sequenceA
-** Question 5: Functors
-*** Напишите законы *функтора*
-*** Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~ 
-*** Напишите класс типов ~Bifunctor~ и реализуйте его для пары
-*** Напишите класс типов ~Bifunctor~ и реализуйте его для ~Either~
-*** Реализуйте ~fmap~ через ~bind~
+** [4/5]Question 5: Functors
+*** DONE Напишите законы *функтора*
+#+BEGIN_SRC haskell
+1. fmap id = id
+2. fmap (f . g)   = (fmap f) . (fmap g)
+   fmap (f . g) F = fmap f (fmap g F)
+#+END_SRC
+*** DONE Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~ 
+#+BEGIN_SRC haskell
+(<<$>>) f w = (fmap $ fmap f) w
+#+END_SRC
+*** DONE Напишите класс типов ~Bifunctor~ и реализуйте его для пары
+#+BEGIN_SRC haskell
+class Bifunctor p where
+    bimap  :: (a -> b) -> (c -> d) -> p a c -> p b d
+instance Bifunctor (,) where
+    bimap f g (a, b) = (f a, g b)
+#+END_SRC
+*** DONE Напишите класс типов ~Bifunctor~ и реализуйте его для ~Either~
+#+BEGIN_SRC haskell
+instance Bifunctor Either where
+    bimap f _ (Left a)  = Left  (f a)
+    bimap _ g (Right b) = Right (g b)
+#+END_SRC
+*** TODO Реализуйте ~fmap~ через ~bind~
 ** Question 6: Applicatives
 *** Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
 *** Напишите type class ~Applicative~ и его реализацию для ~ZipList~
