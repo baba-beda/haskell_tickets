@@ -14,7 +14,8 @@ for  expresion(i = 0; i < in.length; i++) {
 }
 #+END_SRC
 #+BEGIN_SRC haskell
-out = map (\x -> x * 2) in
+out = map (\x applyTwo :: ([a] -> [a]) -> [b] -> [c] -> ([b], [c])
+applyTwo f x y = (f x, f y)-> x * 2) in
 -- то же самое
 out = map (*2) in
 #+END_SRC
@@ -1429,5 +1430,122 @@ myTStr2 = "bar"
 * Ticket 13: Comonads
 * Ticket 14: Enterprise Haskell
 * Ticket 15: Advanced type features
+** Параметрический полиморфизм
+Свойство семантики системы типов, позволяющее обрабатывать значения разных типов идентичным образом, то есть исполнять физически /один и тот же/ код для данных /разных/ типов.
+*Полиморфный тип* (политип) - тип, параметризованный другим типом. Параметр в слое типов называется /переменной типа/.
+*Квалифицированный тип* - полиморфный тип, дополнительно снабженный набором /предикатов/. регламентирующих спектр допустимых значений параметра этого типа. 
+*** Ранг полиморфизма
+*Ранг полиморфизма* показывает допустимую в рамках системы глубину вложения кванторов переменных типа. /Полиморфизм ранга k/ позволяет конкретизировать переменные типа полиморфными типами ранга не выше (k - 1)
+
+/Джо Уэллс/ доказал, что выведение типов для [[https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_F][/Системы F/]], типизированной по Карри, неразрешимо для рангов выше 2-го, так что при использовании более высоких рангов необходимо использовать явное аннотирование типами. 
+*** Пренексный полиморфизм
+Полиморфизм 1-го ранга. Переменные типа не могут конкретизироваться полиморфными типами. 
+Все типы могут быть записаны в форме, когда все кванторы переменных типа вынесены в самую внешнюю (/пренексную/) позицию, что и называется пренексной нормальной формой. 
+*** Импредикативный (безусловный) полиморфизм
+Разрешает конкретизировать переменную типа /произвольным/ типом - как мономорфным, так и полиморфным, включая сам определяемый тип. (Разрешение в рамках некоего исчисления рекурсивного включения системы в саму себя называется /импредикативностью/)
+
+Импредикативный полиморфизм позволяет передавать полиморфные функции другим функциям в качестве параметров, возвращать их в качестве результата, хранить их в структурах данных и т. д., поэтому его также называют /полиморфизмом первого класса/. Это наиболее мощная форма полиморфизма, но, с другой стороны, представляющая серьёзную проблему для оптимизации и делающая выведение типов неразрешимым.
+
+/Пример/: Система F и ее расширения.
+** forall
+Для того, чтоб явно прописывать типы с использованием ~forall~, необходимо использовать расширение языка ~ExplicitForAll~
+#+BEGIN_SRC haskell
+id :: a -> a
+id x = x
+
+id :: forall a
+id x = x
+
+-- for every type `a`, this function can be considered to have type `a -> a`
+
+undefined :: forall a . a
+undefined = ⊥
+
+applyTwo :: ([a] -> [a]) -> ([Int], [Bool])             -- doesn't compile
+applyTwo f = (f [2, 1, 3], f [True, False])
+
+applyTwo :: forall a . ([a] -> [a]) -> ([Int], [Bool])  -- equivalent form
+applyTwo f = (f [2, 1, 3], f [True, False])
+
+-- compiling variant:
+applyTwo :: (forall a . [a] -> [a]) -> ([Int], [Bool])
+
+-- more generic applyTwo:
+applyTwo :: ([a] -> [a]) -> [b] -> [c] -> ([b], [c])
+applyTwo f x y = (f x, f y)
+-- but with explicit forall its type is:
+applyTwo :: forall a b c . ([a] -> [a]) -> [b] -> [c] -> ([b], [c])
+-- but it should be like this:
+applyTwo :: forall b c . (forall a . [a] -> [a]) -> [b] -> [c] -> ([b], [c])
+-- but it'll only work with -XRank2Types or -XRankNTypes
+#+END_SRC
+
+Можно рассматривать тип как множество допустимых значений. Например, ~Bool = {True, False, \perp}~, ~Integer~ - множество всех целых чисел (включает противоречие \perp), и т.д.
+Соответственно ~forall~ пересекает множества допустимых значений типов. 
+Например, ~forall a . a~ есть пересечение всех типов, то есть {\perp}
+** RankNTypes
+Расширения языка: ~Rank2Types~ и ~RankNTypes~
+#+BEGIN_SRC haskell
+Rank 0: Int
+Rank 1: forall a . a -> Int
+Rank 2: (forall a . a -> Int) -> Int           -- could be enabled by Rank2Types
+Rank 3: ((forall a . a -> Int) -> Int) -> Int
+#+END_SRC
+Как уже было сказано выше *ранг* типа описывает глубину, на которой могут появиться кванторы /для любого/ в /контравариантной/ позиции, т.е. слева от стрелки. 
+
+/Примеры/:
+#+BEGIN_SRC haskell
+Int -> Int                 -- rank 0
+
+forall a . a -> a          -- rank 1
+
+(forall a . a -> a) -> Int -- rank 2
+
+forall a b . a -> b -> a   -- rank 1
+
+Int -> (forall a . a -> a) -- можно вынести forall так как он находится справа от стрелки.  
+forall a . Int -> a -> a   -- rank 1
+
+forall a . a -> (forall b . b -> a) 
+forall a b . a -> b -> a   -- rank 1
+
+(a -> a) -> forall b . b -> b) -> (c -> c) -- rank 2
+#+END_SRC
+** Show everything
+Используется расширение языка ~ExistentialQuantification~.
+Предположим, у нас есть некоторая группа значений. Мы не знаем, одного ли они типа, но мы точно знаем, что их типы являются членами одного класса (или, выражаясь обширнее, все эти значения обладают некоторым свойство). Было бы неплохо положить все эти значения в один лист, но мы не можем, так как элементы листа должны быть одного типа (листы гомогенные относительно типа). 
+#+BEGIN_SRC haskell
+showAll :: Show a => [a] -> [String]
+showAll = map show
+
+showAll :: forall a . Show a => [a] -> [String]  -- the same as above
+showAll = map show
+
+showAll :: Show a => [forall a . a] -> [String]  -- non-reachable
+showAll = map show
+
+showAll :: [forall a . Show a => a] -> [String]  -- only bottoms
+showAll = map show
+
+showAll :: forall a . [Show a => a] -> [String]  -- ImpredicativeTypes (broken)
+showAll = map show
+#+END_SRC
+Но *экзистенциальные типы* позволяют нам несколько расслабить данное ограничение с помощью определения "коробки для типа" или "маску для типа" (/type hider/).
+#+BEGIN_SRC haskell
+data ShowBox = forall a . Show a => SB a  -- existental constructor
+SB :: forall a . Show a => a -> ShowBox
+
+showAll :: [ShowBox] -> [String]
+showAll = map (\(SB a) -> show a)
+ghci> showAll [SB (), SB 1, SB True]  -- again, this magic works
+["()","1","True"]
+#+END_SRC
+
+#+BEGIN_SRC haskell
+-- recall DatatypeContexts
+data (Show a) => ShowBox a = SB a
+showAll :: [ShowBox a] -> [String]  -- won't work
+showAll = map (\(SB a) -> show a)
+#+END_SRC
 * Ticket 16: Idris
 
