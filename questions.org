@@ -155,7 +155,7 @@ type P a = a Int => Int
 ~C :: (* -> Constraint) -> *~
 *** DONE Укажите kind типа ~type C p = (p Int, p Double)~
 ~C :: (* -> *) -> *~
-** [9/14]Question 4: Type hierarchy
+** [11/14]Question 4: Type hierarchy
 *** DONE Чему равно значение ~length (Left "hello")~ и почему?
 0
 #+BEGIN_SRC haskell
@@ -175,8 +175,19 @@ class (Functor t, Foldable t) => Traversable t where
   sequence :: Monad m => t (m a) -> m (t a)
   sequence = sequenceA
 #+END_SRC
-*** TODO Напишите реализацию ~Traversable~ для списка
-*** TODO Напишите реализацию ~Traversable~ для ~Maybe~ 
+*** DONE Напишите реализацию ~Traversable~ для списка
+#+BEGIN_SRC haskell
+instance Traversable [] where
+    traverse f = foldr consF (pure [])
+    where 
+       consF x ys = (:) <$> f x <*> ys
+#+END_SRC
+*** DONE Напишите реализацию ~Traversable~ для ~Maybe~ 
+#+BEGIN_SRC haskell
+instance Traversable Maybe where
+    traverse _ Nothing  = pure Nothing
+    traverse f (Just x) = Just <$> f x
+#+END_SRC
 *** TODO Напишите реализацию ~Traversable~ для ~Either~
 *** DONE Напишите реализацию ~Foldable~ для списка 
 #+BEGIN_SRC haskell
@@ -434,7 +445,6 @@ instance Monad (Cont r) where
 #+BEGIN_SRC haskell
 (>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
 #+END_SRC
-композиция монад?
 Композиция функций, возвращающих завернутое значение. 
 *** DONE Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
 #+BEGIN_SRC haskell
