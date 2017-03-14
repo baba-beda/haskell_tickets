@@ -304,7 +304,7 @@ instance Monad Maybe where
 (>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
 #+END_SRC
 композиция монад?
-** Question 8: Trans
+** [0/7]Question 8: Trans
 *** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
 *** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~WriterT~
 *** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~MaybeT~
@@ -312,7 +312,7 @@ instance Monad Maybe where
 *** TODO Напишите тип ~StateT~ и то, как определен ~State~ через ~StateT~
 *** TODO Напишите тип ~MaybeT~ и реализуйте его инстанс ~Monad~
 *** TODO Нарисуйте табличку отличий обычных типов и их трансформеров для известных вам трансформеров
-** Question 9: Strict Lazy
+** [0/10]Question 9: Strict Lazy
 *** TODO Что такое *irrefutable patterns* и зачем они нужны?
 *** TODO Что такое *Stream Fusion* и зачем он нужен?
 *** TODO Напишите, что значит тип ~ST~ и напишите основные функции по работе с ним
@@ -323,7 +323,7 @@ instance Monad Maybe where
 *** TODO Что такое ~STRef~ и в чем отличие от ~IORef~?
 *** TODO Что такое *Deforestation*?
 *** TODO Чем плохо использовать ~IORef~ и ~IOArray~? Зачем нужны ~STRef~ и ~STArray~?
-** Question 10: TemplateHaskell
+** [0/4]Question 10: TemplateHaskell
 *** TODO Как можно посмотреть *AST-дерево* для выражения в Haskell?
 *** TODO Напишите не меньше трех применений *TemplateHaskell*
 *** TODO Что такое ~Q~ в типах функций Template Haskell?
@@ -348,7 +348,7 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 *** TODO Реализуйте ~over~ через ~view~ и ~set~. 
 *** TODO Напишите функцию ~lens~, которая принимает геттер и сеттер и возвращает линзу
 *** TODO Укажите операторные обозначений функций ~view~, ~set~, ~over~. Есть ли отличие в типах функций и их операторных выражений?
-** Question 12: Threads
+** [0/8]Question 12: Threads
 *** TODO Что такое ~STM~ (коротко), что позволяет делать и какие есть функции по работе с ним?
 *** TODO В чем отличие Haskell потоков от, например, потоков в Java?
 *** TODO Что такое ~Strategy~? Перечислите несколько стратегий и реализуйте некоторые. Зачем они нужны?
@@ -357,7 +357,7 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 *** TODO Укажите несколько полезных опций *RTS*
 *** TODO Опишите, что такое ~MVar~, зачем он может быть нужен и несколько функций по работе с этим объектом.
 *** TODO Что делает ~forkIO~? Чем он отличается от ~forkFinally~?
-** Question 13: forall
+** [5/5]Question 13: forall
 *** DONE Напишите, как иметь список объектов разных функторов, внутри каждого из которых значения одинакового типа, чтобы иметь возможность применить функции из этого значения в другое?
 #+BEGIN_SRC haskell
 data FunctorBox a = forall f . Functor f => FB (f a)
@@ -390,7 +390,7 @@ fmapFB f = \(FB a) -> FB (f <$> a)
             nubbedList = nub inputList
   -- /show
 #+END_SRC
-** Question 14: Advanced types
+** [4/5]Question 14: Advanced types
 *** DONE Что такое *typed holes* и зачем они нужны?
 С их помощью можно спросить у компилятора, какого типа должно быть твое что-то.
 #+BEGIN_SRC haskell
@@ -425,7 +425,7 @@ class Mult a b c | a b -> c where
   (*) :: a -> b -> c
 #+END_SRC
 Классический (и единственный) пример использования - перемножение матриц/векторов/скаляров, тайпкласс указан выше.
-** Question 15: Comonads
+** [0/11]Question 15: Comonads
 *** TODO Напишите пример использования *комонад* 
 *** TODO Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
 *** TODO Напишите, какие комонады двойственны монадам ~Traced, Store, Env~
@@ -437,7 +437,7 @@ class Mult a b c | a b -> c where
 *** TODO ~IO~ использует абстракцию монад, какой аналог есть в мире комонад?
 *** TODO Напишите класс ~ComonadTrans~
 *** TODO Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
-** Question 16: Idris
+** [0/8]Question 16: Idris
 *** TODO Реализуйте функцию ~take~ для вектора на Idris
 *** TODO Реализуйте функцию ~filter~ для вектора на Idris
 *** TODO Реализуйте функцию ~head~ для списка на Idris, которая компилируется только с гарантированно непустыми списками.
