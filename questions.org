@@ -32,7 +32,7 @@
 2. Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 3. Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 4. Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-** [14/16]Question 2: Basic Syntax
+** [16/18]Question 2: Basic Syntax
 *** TODO Имеется класс типов: ~class C a where maxInt :: Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** DONE Как обновить ~f~ в ~data A = A { f :: Int -> Int }~
@@ -135,14 +135,30 @@ evenPairs = filter (even . uncurry (+))
 *** DONE Задан тип данных ~data Role a = A { name :: String, role :: a } | B { name :: String, roles :: [a] }~. Напишите конструкцию, синтаксическим сахаром для которой является данных Record Syntax.
 #+BEGIN_SRC haskell
 data Role a = A String a | B String [a]
+    name :: Role a -> String
+    name (A name _) = name
+    name (B name _) = name
+
+    role :: Role a -> a
+    role (A _ role) = role
+
+    roles :: Role a -> [a]
+    roles (B _ roles) = roles
 #+END_SRC
-** [10/10]Question 3: Kinds
+*** DONE Когда стоит описывать функцию, зависящую от type класса, внутри, а когда снаружи?
+Когда функция изменяет класс или переводит класс во что-то другое - лучше внутри, если хотим использовать этот класс для вычисления, то снаружи.
+*** DONE Как писать функции и операторы в префиксной и инфиксной нотации?
+~(:)~ - это префиксная нотация, ~:~ - инфиксная
+~map f a~ - префиксная, ~f `map` a~ - инфиксная
+** [13/13]Question 3: Kinds
 *** DONE Приведите пример типа с kind'ом ~Constraint -> *~
 #+BEGIN_SRC haskell
 type P a = a => Int
 #+END_SRC
 *** DONE Приведите пример типа с kind'ом ~(* -> Constraint) -> Constraint~
-Не существует, наверное (или я нуб)
+#+BEGIN_SRC haskell
+type D a = (a Int, Num Int)
+#+END_SRC
 *** DONE Приведите пример типа с kind'ом ~(* -> *) -> Constraint~
 ~Monad, Functor, Applicative~
 *** DONE Приведите пример типа с kind'ом ~(* -> Constraint) -> *~
@@ -151,6 +167,12 @@ type P a = a Int => Int
 #+END_SRC
 *** DONE Приведите пример типа с kind'ом ~* -> Constraint~
 ~Num, Ord, Eq, Show~
+*** DONE Приведите пример типа с kind’ом ~(*->*)->*->*~
+~MaybeT~
+*** DONE Приведите пример типа с kind’ом ~(* -> *) -> *~
+#+BEGIN_SRC haskell
+type P a = a Int
+#+END_SRC
 *** DONE Укажите kind для ~Monad~
 ~(* -> *) -> Constraint~
 *** DONE Укажите kind следующего типа данных: ~data A f g = B (f g) (g f)~
@@ -161,6 +183,8 @@ type P a = a Int => Int
 ~C :: (* -> Constraint) -> *~
 *** DONE Укажите kind типа ~type C p = (p Int, p Double)~
 ~C :: (* -> *) -> *~
+*** DONE Укажите kind типа ~type D a = (a Int, Num Int)~
+~D :: (* -> Constraint) -> Constraint~
 ** [13/14]Question 4: Type hierarchy
 *** DONE Чему равно значение ~length (Left "hello")~ и почему?
 ~0~, потому что левая ветка в ~Either~ отвечает за ошибки и реализация в ~Left~
@@ -228,7 +252,7 @@ sequenceA = traverse id
 ~foldr~ или ~foldMap~.
 *** DONE Укажите *minimal complete definition* для type class'а ~Traversable~
 ~traverse~ или ~sequenceA~.
-** [5/5]Question 5: Functors
+** [6/6]Question 5: Functors
 *** DONE Напишите законы *функтора*
 1. ~fmap id = id~
 2. ~fmap (f . g) = fmap f . fmap g~
@@ -262,7 +286,14 @@ instance Bifunctor Either where
 #+BEGIN_SRC haskell
 fmap f xs = xs >>= return . f
 #+END_SRC
-** [6/7]Question 6: Applicatives
+*** DONE Реализуйте ~bind~ через ~join~ и ~fmap~
+#+BEGIN_SRC haskell
+(>>=) :: m a -> (a -> m b) -> m b
+fmap :: (a -> b) -> f a -> f b
+join :: m (m a) -> m a
+a >>= f = join (fmap f a)
+#+END_SRC
+** [8/9]Question 6: Applicatives
 *** DONE Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
 #+BEGIN_SRC haskell
 class Functor f \Rightarrow Applicative f where
@@ -311,7 +342,24 @@ getY = fmap
 getY = (<$>)
 getY g x = pure g <*> x
 #+END_SRC
-** [15/16]Question 7: Monads
+*** DONE Реализуйте Applicative для списка
+#+BEGIN_SRC haskell
+class Functor f => Applicative f where
+    pure :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b
+
+instance Applicative [] where
+    pure x = [x]
+    fs <*> xs = [f x | f <- fs, x <- xs]
+#+END_SRC
+*** DONE Реализуйте Applicative для Either
+#+BEGIN_SRC haskell
+instance Applicative (Either e) where
+    pure          = Right
+    Left  e <*> _ = Left e
+    Right f <*> r = fmap f r
+#+END_SRC
+** [18/19]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому значению.
 #+BEGIN_SRC haskell
@@ -336,6 +384,7 @@ infixr 1  =<<
 8. Reader
 9. RWS
 10. Cont
+... ST, STM, Option, (->) a, Min
 *** DONE Напишите не менее семи функций, полезных при работе с монадами
 1. return
 2. >>=
@@ -389,6 +438,26 @@ instance Monad (Either a) where
     return = Right
     Left l >>= _ = Left l
     Right r >>= f = f r
+#+END_SRC
+*** DONE Реализуйте Monad для ((\rightarrow) r)
+#+BEGIN_SRC haskell
+instance Monad ((\rightarrow) r) where
+    return = const
+    f >>= k = \r \rightarrow k (f r) r
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для ~Maybe~
+#+BEGIN_SRC haskell
+instance Monoid a => Monoid (Maybe a) where
+    mempty = Nothing
+    Nothing `mappend` m = m
+    m `mappend` Nothing = m
+    Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для (\rightarrow)
+#+BEGIN_SRC haskell
+instance Monoid b \Rightarrow Monoid (a \rightarrow b) where
+    mempty _ = mempty
+    mappend f g x = f x `mappend` g x
 #+END_SRC
 *** DONE Напишите определение типа данных ~Writer~ и его ~instance Monad~
 #+BEGIN_SRC haskell
@@ -512,7 +581,7 @@ instance Monad m \Rightarrow Monad (MaybeT m) where
 | Reader     | ReaderT     | r \rightarrow a         | r \rightarrow m a         |
 | State      | StateT      | s \rightarrow (a, s)    | s \rightarrow m (a, s)    |
 | Cont       | ContT       | (a \rightarrow r) \rightarrow r   | (a \rightarrow m r) \rightarrow m r |
-** [0/10]Question 9: Strict Lazy
+** [2/12]Question 9: Strict Lazy
 *** TODO Что такое *irrefutable patterns* и зачем они нужны?
 *** TODO Что такое *Stream Fusion* и зачем он нужен?
 *** TODO Напишите, что значит тип ~ST~ и напишите основные функции по работе с ним
@@ -523,12 +592,32 @@ instance Monad m \Rightarrow Monad (MaybeT m) where
 *** TODO Что такое ~STRef~ и в чем отличие от ~IORef~?
 *** TODO Что такое *Deforestation*?
 *** TODO Чем плохо использовать ~IORef~ и ~IOArray~? Зачем нужны ~STRef~ и ~STArray~?
-** [0/4]Question 10: TemplateHaskell
+*** DONE seq - что и зачем это
+x seq y означает, что когда y рассчитан до WHNF, x тоже просчитывается до whnf.
+Нужно для для того, чтобы сделать x strict
+seq x b behaves essentially like if x == 0 then b else b – unconditionally equal to b, but forcing x along the way
+*** DONE WHNF. пример в ней и не в ней
+An expression is in weak head normal form (WHNF), if it is either:
+- a constructor (eventually applied to arguments) like True, Just (square 42) or (:) 1
+- a built-in function applied to too few arguments (perhaps none) like (+) 2 or sqrt.
+- or a lambda abstraction \x -> expression.
+An expression in weak head normal form has been evaluated to the outermost data constructor or lambda abstraction (the head). Sub-expressions may or may not have been evaluated. Therefore, every normal form expression is also in weak head normal form, though the opposite does not hold in general
+WHNF: \x -> x + 2
+NOT WHNF: (\x -> x + 2) 3
+** [1/5]Question 10: TemplateHaskell
 *** TODO Как можно посмотреть *AST-дерево* для выражения в Haskell?
 *** TODO Напишите не меньше трех применений *TemplateHaskell*
 *** TODO Что такое ~Q~ в типах функций Template Haskell?
 *** TODO В чем разница между ~[| |]~ и ~$()~?
-** [3/10]Question 11: Lenses
+*** DONE 4 применения темплейт хаскеля
+1. Писать функции n аргументов
+2. Генерить автоматом инстансы
+3. Что-то высчитывать во время компиляции, тип один раз и навсегда.
+4. Парсить всякие структуры типа json
+5. Генерировать автоматом линзы
+** [5/12]Question 11: Lenses
+*** DONE Зачем нужны линзы
+Чтобы в сложных структурах(записях) удобно доставать и изменять значения.
 *** TODO Что такое изоморфизм (~Iso~)?
 *** TODO Чем линзы отличаются от призм?
 *** DONE Напишите тип ~Iso~
@@ -547,8 +636,11 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 *** TODO Реализуйте ~set~ через ~over~
 *** TODO Реализуйте ~over~ через ~view~ и ~set~.
 *** TODO Напишите функцию ~lens~, которая принимает геттер и сеттер и возвращает линзу
-*** TODO Укажите операторные обозначений функций ~view~, ~set~, ~over~. Есть ли отличие в типах функций и их операторных выражений?
-** [0/8]Question 12: Threads
+*** TODO Укажите операторные обозначений функций ~view~, ~set~, ~over~. Есть ли отличие в типах функций и их операторных выражений?***
+*** DONE Реализация view
+Не понятно к чему это, ну тип view' :: obj -> field
+Как мы его делаем, есть поле car, ну и пишем car Person
+** [2/10]Question 12: Threads
 *** TODO Что такое ~STM~ (коротко), что позволяет делать и какие есть функции по работе с ним?
 *** TODO В чем отличие Haskell потоков от, например, потоков в Java?
 *** TODO Что такое ~Strategy~? Перечислите несколько стратегий и реализуйте некоторые. Зачем они нужны?
@@ -557,7 +649,16 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 *** TODO Укажите несколько полезных опций *RTS*
 *** TODO Опишите, что такое ~MVar~, зачем он может быть нужен и несколько функций по работе с этим объектом.
 *** TODO Что делает ~forkIO~? Чем он отличается от ~forkFinally~?
-** [5/5]Question 13: forall
+*** DONE Как в хаскеле реализована concurency
+Par, Strategy, forkIO, MVar, STM, Async
+*** DONE Что такое spark и его флаги
+Мини тред, занятый одним вычислением, соответственно легковесный и их можно завести очень много
+converted - useful work
+overflowed - sparks generated after spark pool limit achieved
+dud - already evaluated at the moment of applying `rpar`
+GC'd - unused and thrown away (ignored) => garbage collector
+fizzled - was unevluated at the time it was sparked but was later evaluated independently by the program
+** [6/6]Question 13: forall
 *** DONE Напишите, как иметь список объектов разных функторов, внутри каждого из которых значения одинакового типа, чтобы иметь возможность применить функции из этого значения в другое?
 CLOSED: [2017-03-14 вт 01:03]
 #+BEGIN_SRC haskell
@@ -591,7 +692,11 @@ fmapFB f = \(FB a) -> FB (f <$> a)
             nubbedList = nub inputList
   -- /show
 #+END_SRC
-** [4/5]Question 14: Advanced types
+*** DONE Написать ~fmap~ с ~forall~
+#+BEGIN_SRC haskell
+fmap :: forall f . forall a b . (a \rightarrow b) \rightarrow f a \rightarrow f b
+#+END_SRC
+** [7/8]Question 14: Advanced types
 *** DONE Что такое *typed holes* и зачем они нужны?
 С их помощью можно спросить у компилятора, какого типа должно быть твое что-то.
 #+BEGIN_SRC haskell
@@ -626,7 +731,23 @@ class Mult a b c | a b -> c where
   (*) :: a -> b -> c
 #+END_SRC
 Классический (и единственный) пример использования - перемножение матриц/векторов/скаляров, тайпкласс указан выше.
-** [10/11]Question 15: Comonads
+*** DONE Пример функции 2-го ранга
+#+BEGIN_SRC haskell
+Rank 0: Int
+Rank 1: forall a . a -> Int
+Rank 2: (forall a . a -> Int) -> Int
+Rank 3: ((forall a . a -> Int) -> Int) -> Int
+
+foo :: (forall a . a -> a) -> (Char,Bool)
+foo f = (f 'c', f True)
+#+END_SRC
+*** DONE Что делает -XDataKinds
+Заставляет создавать компилятор кайнды для нашей даты
+Промоутит простые типы до кайндов
+*** DONE GADT
+Generalized algebraic datatypes или просто ГАДы
+Generalized algebraic datatypes, or simply GADTs, are a generalization of the algebraic data types that you are familiar with. Basically, they allow you to explicitly write down the types of the constructors.
+** [12/13]Question 15: Comonads
 *** DONE Напишите пример использования *комонад*
 #+BEGIN_SRC haskell
 type Option = String
@@ -718,7 +839,34 @@ let wb =      extend (\this \rightarrow expr1) wa
     wc =      extend (\this \rightarrow expr2) wb
 in  extract $ extend (\this \rightarrow expr3) wc
 #+END_SRC
-** [0/8]Question 16: Idris
+*** DONE ~extend~ для ~comonad~
+#+BEGIN_SRC haskell
+class Functor w => Comonad w where
+    extract   :: w a -> a
+    (<<=)     :: (w a -> b) -> w a -> w b  -- extend
+    duplicate :: w a -> w (w a)
+extend f  = fmap f . duplicate
+duplicate = extend id
+fmap f    = extend (f . extract)
+
+data [a] = [] | a : [a]
+data ListZipper a = LZ [a] a [a]
+instance Functor ListZipper where
+    fmap f (LZ ls x rs) = LZ (map f ls) (f x) (map f rs)
+extract :: ListZipper a -> a
+extract (LZ _ x _) = x
+#+END_SRC
+*** DONE ~Zipper~
+Такая штуковина, которая работает с бесконечными структурами, и ползает по ним с помощью курсора, помогает считать значения, зависящие от соседей
+#+BEGIN_SRC haskell
+data [a] = [] | a : [a]
+data ListZipper a = LZ [a] a [a]
+listLeft, listRight :: ListZipper a -> ListZipper a
+-- Сдвиг вправо и влево
+listLeft  (LZ (a:as) x bs) = LZ as a (x:bs)
+listRight (LZ as x (b:bs)) = LZ (x:as) b bs
+#+END_SRC
+** [4/12]Question 16: Idris
 *** TODO Реализуйте функцию ~take~ для вектора на Idris
 *** TODO Реализуйте функцию ~filter~ для вектора на Idris
 *** TODO Реализуйте функцию ~head~ для списка на Idris, которая компилируется только с гарантированно непустыми списками.
@@ -727,3 +875,21 @@ in  extract $ extend (\this \rightarrow expr3) wc
 *** TODO Что такое ~!~-идиома в Idris?
 *** TODO Что такое ~_|_-eliminator~? Зачем это надо?
 *** TODO Что такое "*тотальность*" и какие преимущества она дает?
+*** DONE Какие парадигмы использует Irdis
+Totality
+Strict evalution
+Theorem proving
+DSL
+Extensible effects
+*** DONE Зависимые типы в idris и зачем они нужны
+Зависимый тип в информатике и логике — тип, который зависит от некоторого значения.
+К примеру, тип, описывающий n-кортежи действительных чисел является зависимым, так как он «зависит» от величины n.
+типы функций тогда могут принимать вид «функция, принимающая сообщение, подписанное некоторым пользователем, и возвращающая данные этого пользователя», вместо более распространённого «функция, принимающая сообщение и возвращающая данные пользователя», что ведёт к намного более точным спецификациям. Более того, это даёт возможность, так сказать, перейти от подлежащих к сказуемым, использовать принцип «высказывания как типы»: «5 больше 3», «неверно, что 5 больше 3», «7 является простым числом», «Василий получил 2 сообщения».
+*** DONE Отличие irdis от разных языков
+Идрис сочетает в себе особенности относительно мейнстримовых языков функционального программирования с функциями, заимствованных из систем автоматического доказательства теорем, фактически размывает границу между этими двумя видами программного обеспечения.
+*** DONE Пример кода на irdis
+#+BEGIN_SRC idris
+(++) : Vect n a -> Vect m a -> Vect (n + m) a
+(++) Nil       ys = ys
+(++) (x :: xs) ys = x :: xs ++ ys
+#+END_SRC
