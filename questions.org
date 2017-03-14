@@ -341,7 +341,7 @@ liftA3 f a b c = f <$> a <*> b <*> c
 eitherA 
 #+END_SRC
 *** TODO Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
-** [14/16]Question 7: Monads
+** [19/19]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому знаению.
 #+BEGIN_SRC haskell
@@ -418,6 +418,20 @@ instance Monad (Either a) where
     return  = Right
     Right r >>= f = f r
     Left l  >>= _ = Left l
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для ~Maybe~ 
+#+BEGIN_SRC haskell
+instance Monoid a => Monoid (Maybe a) where
+    mempty = Nothing
+    Nothing `mappend` m = m
+    m `mappend` Nothing = m
+    Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для ~(->)~
+#+BEGIN_SRC haskell
+instance Monoid b => Monoid (a -> b) where
+    mempty _ = mempty
+    mappend f g x = f x `mappend` g x
 #+END_SRC
 *** DONE Напишите определение типа данных ~Writer~ и его ~instance Monad~
 #+BEGIN_SRC haskell
@@ -497,8 +511,22 @@ do let x = y
 #+END_SRC
 композиция монад?
 Композиция функций, возвращающих завернутое значение. 
-*** TODO Что такое ~IO~? Как теоретически это реализовано? 
-*** TODO Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
+*** DONE Что такое ~IO~? Как теоретически это реализовано? 
+#+BEGIN_SRC haskell
+data IO a :: * -> *
+instance Monad IO where
+    (>>=) = bindIO
+#+end_src
+*** DONE Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
+unsafeInterleaveIO дает дополнительные гарантии на порядок операций, идейно так реализовано:
+#+BEGIN_SRC haskell
+do
+    before
+    unsafeInterleaveIO side
+    after
+#+end_src
+Гарантируется, что то, что в side всегда выполнится после before. unsafePerformIO таких гарантий не дает.
+
 ** [7/7]Question 8: Trans
 *** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
 #+BEGIN_SRC haskell
