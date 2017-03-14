@@ -359,7 +359,7 @@ instance Applicative (Either e) where
     Left  e <*> _ = Left e
     Right f <*> r = fmap f r
 #+END_SRC
-** [18/19]Question 7: Monads
+** [19/19]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому значению.
 #+BEGIN_SRC haskell
@@ -493,7 +493,12 @@ instance Monad (Cont r) where
     return a = Cont ($ a)
     Cont arr >>= f = Cont $ \br \rightarrow arr $ \a \rightarrow runCont (f a) br
 #+END_SRC
-*** TODO Что такое ~IO~? Как теоретически это реализовано?
+*** DONE Что такое ~IO~? Как теоретически это реализовано?
+#+BEGIN_SRC haskell
+data IO a :: * \rightarrow *
+instance Monad IO where
+    (>>=) = bindIO
+#+END_SRC
 *** DONE Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
 #+BEGIN_SRC haskell
 do s \leftarrow getLine
@@ -581,7 +586,7 @@ instance Monad m \Rightarrow Monad (MaybeT m) where
 | Reader     | ReaderT     | r \rightarrow a         | r \rightarrow m a         |
 | State      | StateT      | s \rightarrow (a, s)    | s \rightarrow m (a, s)    |
 | Cont       | ContT       | (a \rightarrow r) \rightarrow r   | (a \rightarrow m r) \rightarrow m r |
-** [2/12]Question 9: Strict Lazy
+** [4/12]Question 9: Strict Lazy
 *** TODO Что такое *irrefutable patterns* и зачем они нужны?
 *** TODO Что такое *Stream Fusion* и зачем он нужен?
 *** TODO Напишите, что значит тип ~ST~ и напишите основные функции по работе с ним
@@ -589,8 +594,23 @@ instance Monad m \Rightarrow Monad (MaybeT m) where
 *** TODO Укажите, что делает ~deepseq~ и как.
 *** TODO В чем разница между ~seq~ и ~deepseq~?
 *** TODO В чем разница между ~seq~ и ~BangPatterns~?
-*** TODO Что такое ~STRef~ и в чем отличие от ~IORef~?
-*** TODO Что такое *Deforestation*?
+*** DONE Что такое ~STRef~ и в чем отличие от ~IORef~?
+И то, и другое хранит ссылку на изменяемую переменную, но ~IORef~ позволяет сделать
+больше, например, ~IO~ действия. Прикол в том, что из ~ST~ монады, в отличие от ~IO~
+можно выходить, это позволяет писать функции, использующие мутабельное дерьмо, но
+имеющие чистый интерфейс.
+*** DONE Что такое *Deforestation*?
+Один из способов оптимизации ленивых вычислений.
+Вот это:
+#+BEGIN_SRC haskell
+map f . map g
+filter p . filter q
+#+END_SRC
+Меняется на это:
+#+BEGIN_SRC haskell
+map (f . g)
+filter (\x \rightarrow q x && p x)
+#+END_SRC
 *** TODO Чем плохо использовать ~IORef~ и ~IOArray~? Зачем нужны ~STRef~ и ~STArray~?
 *** DONE seq - что и зачем это
 x seq y означает, что когда y рассчитан до WHNF, x тоже просчитывается до whnf.
@@ -604,11 +624,19 @@ An expression is in weak head normal form (WHNF), if it is either:
 An expression in weak head normal form has been evaluated to the outermost data constructor or lambda abstraction (the head). Sub-expressions may or may not have been evaluated. Therefore, every normal form expression is also in weak head normal form, though the opposite does not hold in general
 WHNF: \x -> x + 2
 NOT WHNF: (\x -> x + 2) 3
-** [1/5]Question 10: TemplateHaskell
-*** TODO Как можно посмотреть *AST-дерево* для выражения в Haskell?
-*** TODO Напишите не меньше трех применений *TemplateHaskell*
+** [3/4]Question 10: TemplateHaskell
+*** DONE Как можно посмотреть *AST-дерево* для выражения в Haskell?
+report :: Bool \rightarrow String \rightarrow Q ()
 *** TODO Что такое ~Q~ в типах функций Template Haskell?
-*** TODO В чем разница между ~[| |]~ и ~$()~?
+*** DONE В чем разница между ~[| |]~ и ~$()~?
+~$()~ - вклейка, абстрактное синтаксическое дерево подставляется на место шаблона:
+#+BEGIN_SRC haskell
+main = putStrLn $ "Localtime: " ++ $(localtimeTemplate)
+#+END_SRC
+~[| |]~ - цитирующие скобки, получают абстрактное синтаксическое дерево для указанного кода:
+#+BEGIN_SRC haskell
+[| "string" |] :: Q Exp
+#+END_SRC
 *** DONE 4 применения темплейт хаскеля
 1. Писать функции n аргументов
 2. Генерить автоматом инстансы
@@ -640,10 +668,14 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 *** DONE Реализация view
 Не понятно к чему это, ну тип view' :: obj -> field
 Как мы его делаем, есть поле car, ну и пишем car Person
-** [2/10]Question 12: Threads
+** [3/10]Question 12: Threads
 *** TODO Что такое ~STM~ (коротко), что позволяет делать и какие есть функции по работе с ним?
 *** TODO В чем отличие Haskell потоков от, например, потоков в Java?
-*** TODO Что такое ~Strategy~? Перечислите несколько стратегий и реализуйте некоторые. Зачем они нужны?
+*** DONE Что такое ~Strategy~? Перечислите несколько стратегий и реализуйте некоторые. Зачем они нужны?
+Стратегия параллелизма
+#+BEGIN_SRC haskell
+type Strategy a = a \rightarrow Eval a
+#+END_SRC
 *** TODO Как в Haskell обстоят дела с *DeadLock*'ами?
 *** TODO Что такое *RTS*?
 *** TODO Укажите несколько полезных опций *RTS*
