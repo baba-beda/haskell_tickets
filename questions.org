@@ -228,15 +228,67 @@ sequenceA = traverse id
 ~foldr~ или ~foldMap~.
 *** DONE Укажите *minimal complete definition* для type class'а ~Traversable~
 ~traverse~ или ~sequenceA~.
-** [0/5]Question 5: Functors
-*** TODO Напишите законы *функтора*
-*** TODO Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~
-*** TODO Напишите класс типов ~Bifunctor~ и реализуйте его для пары
-*** TODO Напишите класс типов ~Bifunctor~ и реализуйте его для ~Either~
-*** TODO Реализуйте ~fmap~ через ~bind~
-** [2/7]Question 6: Applicatives
-*** TODO Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
-*** TODO Напишите type class ~Applicative~ и его реализацию для ~ZipList~
+** [5/5]Question 5: Functors
+*** DONE Напишите законы *функтора*
+1. ~fmap id = id~
+2. ~fmap (f . g) = fmap f . fmap g~
+*** DONE Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~
+#+BEGIN_SRC haskell
+(<<$>>) :: (Functor f, Functor g) \Rightarrow (a \rightarrow b) \rightarrow f (g a) \rightarrow f (g b)
+fun <<$>> f = fmap (\g \rightarrow fmap fun g) f
+#+END_SRC
+*** DONE Напишите класс типов ~Bifunctor~ и реализуйте его для пары
+#+BEGIN_SRC haskell
+class Bifunctor p where
+    bimap :: (a \rightarrow b) \rightarrow (c \rightarrow d) \rightarrow p a c \rightarrow p b d
+    first :: (a \rightarrow b)           \rightarrow p a c \rightarrow p b c
+    second ::          (c \rightarrow d) \rightarrow p a c \rightarrow p a d
+
+instance Bifunctor (,) where
+    bimap f g (a, b) = (f a, g b)
+#+END_SRC
+*** DONE Напишите класс типов ~Bifunctor~ и реализуйте его для ~Either~
+#+BEGIN_SRC haskell
+class Bifunctor p where
+    bimap :: (a \rightarrow b) \rightarrow (c \rightarrow d) \rightarrow p a c \rightarrow p b d
+    first :: (a \rightarrow b)           \rightarrow p a c \rightarrow p b c
+    second ::          (c \rightarrow d) \rightarrow p a c \rightarrow p a d
+
+instance Bifunctor Either where
+    bimap f _ (Left a)  = Left $ f a
+    bimap _ g (Right b) = Right $ g b
+#+END_SRC
+*** DONE Реализуйте ~fmap~ через ~bind~
+#+BEGIN_SRC haskell
+fmap f xs = xs >>= return . f
+#+END_SRC
+** [6/7]Question 6: Applicatives
+*** DONE Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
+#+BEGIN_SRC haskell
+class Functor f \Rightarrow Applicative f where
+    pure :: a \rightarrow f a
+    (<*>) :: f (a \rightarrow b) \rightarrow f a \rightarrow f b
+
+    (*>) :: f a \rightarrow f b \rightarrow f b
+    (<*) :: f a \rightarrow f b \rightarrow f a
+
+instance Applicative ((\rightarrow) r) where
+    pure x = \_ \rightarrow x
+    f <*> g = \x \rightarrow f x (g x)
+#+END_SRC
+*** DONE Напишите type class ~Applicative~ и его реализацию для ~ZipList~
+#+BEGIN_SRC haskell
+class Functor f \Rightarrow Applicative f where
+    pure :: a \rightarrow f a
+    (<*>) :: f (a \rightarrow b) \rightarrow f a \rightarrow f b
+
+    (*>) :: f a \rightarrow f b \rightarrow f b
+    (<*) :: f a \rightarrow f b \rightarrow f a
+
+instance Applicative ZipList where
+    pure x = ZipList (repeat x)
+    ZipList fs <*> ZipList xs = ZipList (zipWith id fs xs)
+#+END_SRC
 *** DONE Реализуйте функцию ~liftA3~
 #+BEGIN_SRC haskell
 liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
@@ -247,9 +299,19 @@ liftA3 f a b c = fmap f a <*> b <*> c
 liftAA2 = liftA2 . liftA2
 #+END_SRC
 *** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
-*** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
-*** TODO Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
-** [13/16]Question 7: Monads
+*** DONE Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
+#+BEGIN_SRC haskell
+eitherA :: (Alternative f) \Rightarrow f a \rightarrow f b \rightarrow f (Either a b)
+eitherA f1 f2 = fmap (Left) f1
+#+END_SRC
+*** DONE Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
+#+BEGIN_SRC haskell
+getY :: (Applicative f) \Rightarrow (a \rightarrow b) \rightarrow f a \rightarrow f b
+getY = fmap
+getY = (<$>)
+getY g x = pure g <*> x
+#+END_SRC
+** [15/16]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому значению.
 #+BEGIN_SRC haskell
@@ -363,8 +425,21 @@ instance Monad (Cont r) where
     Cont arr >>= f = Cont $ \br \rightarrow arr $ \a \rightarrow runCont (f a) br
 #+END_SRC
 *** TODO Что такое ~IO~? Как теоретически это реализовано?
-*** TODO Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
-*** TODO Напишите тип ~(>=>)~ и смысл этого оператора.
+*** DONE Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
+#+BEGIN_SRC haskell
+do s \leftarrow getLine
+   let rs = reverse s
+   putStrLn $ "Reversed input : " ++ rs
+#+END_SRC
+Такая штука выливается в это:
+#+BEGIN_SRC haskell
+getLine >>= \s \rightarrow let rs = reverse s in putStrLn $ "Reversed input : " ++ rs
+#+END_SRC
+*** DONE Напишите тип ~(>=>)~ и смысл этого оператора.
+По сути является композицией монад.
+#+BEGIN_SRC haskell
+(>=>) :: Monad m \Rightarrow (a \rightarrow m b) \rightarrow (b \rightarrow m c) \rightarrow a \rightarrow m c
+#+END_SRC
 ** [7/7]Question 8: Trans
 *** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
 #+BEGIN_SRC haskell
@@ -551,18 +626,98 @@ class Mult a b c | a b -> c where
   (*) :: a -> b -> c
 #+END_SRC
 Классический (и единственный) пример использования - перемножение матриц/векторов/скаляров, тайпкласс указан выше.
-** [0/11]Question 15: Comonads
-*** TODO Напишите пример использования *комонад*
-*** TODO Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
-*** TODO Напишите, какие комонады двойственны монадам ~Traced, Store, Env~
-*** TODO Напишите комонаду ~Stream~ и инстанс ~Comonad~ для нее.
-*** TODO Напишите комонаду ~Env~ и инстанс ~Comonad~ для нее.
-*** TODO Напишите комонаду ~Store~ и инстанс ~Comonad~ для нее.
-*** TODO Напишите комонаду ~Traced~ и инстанс ~Comonad~ для нее.
-*** TODO Реализуйте ~instance Comonad~ для обычного ~Zipper~
+** [10/11]Question 15: Comonads
+*** DONE Напишите пример использования *комонад*
+#+BEGIN_SRC haskell
+type Option = String
+data Config = MakeConfig [Option]
+type ConfigBuilder = Traced [Option] Config
+
+profile :: ConfigBuilder \rightarrow Config
+profile builder = runTraced builder ["-prof", "-auto-all"]
+
+goFaster :: ConfigBuilder \rightarrow Config
+goFaster builder = runTraced builder ["-O2"]
+
+ghci> extract (traced defaultConfig =>> goFaster =>> profile)
+MakeConfig ["-Wall","-prof","-auto-all","-O2"]
+#+END_SRC
+*** DONE Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
+~Env~, ~Traced~ и ~Store~ соответственно.
+*** DONE Напишите, какие комонады двойственны монадам ~Traced, Store, Env~
+~Writer~, ~State~ и ~Reader~ соответственно.
+*** DONE Напишите комонаду ~Stream~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+data Stream a = Cons a (Stream a)
+
+instance Functor Stream where
+    fmap f (Cons x xs) = Cons (f x) (fmap f xs)
+
+instance Comonad Stream where
+    extract (Cons x _) = x
+    duplicate xs@(Cons _ xs') = Cons xs (duplicate xs')
+    extend f xs@(Cons _ xs') = Cons (f xs) (extend f xs')
+#+END_SRC
+*** DONE Напишите комонаду ~Env~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+data Env e a = Env e a
+
+instance Comonad (Env a) where
+    extract (Env _ a) = a
+    extend f env@(Env e _) = Env e (f env)
+#+END_SRC
+*** DONE Напишите комонаду ~Store~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+data Store s a = Store (s \rightarrow a) s
+
+instance Comonad (Store s) where
+    extract (Store f s) = f s
+    extend f (Store g s) = Store (f . Store g) s
+#+END_SRC
+*** DONE Напишите комонаду ~Traced~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+newtype Traced m a = Traced { runTraced :: m \rightarrow a }
+
+instance Monoid m \Rightarrow Comonad (Traced m) where
+    extract (Traced ma) = ma mempty
+    extend f (Traced ma) = Traced $ \m \rightarrow f (Traced $ \m' \rightarrow ma (m <> m'))
+#+END_SRC
+*** DONE Реализуйте ~instance Comonad~ для обычного ~Zipper~
+#+BEGIN_SRC haskell
+data ListZipper a = LZ [a] a [a]
+
+instance Functor ListZipper where
+    fmap f (LZ ls x rs) = LZ (fmap f ls) (f x) (fmap f rs)
+
+instance Comonad ListZipper where
+    extract (LZ _ x _) = x
+    duplicate = genericMove listLeft listRight
+      where
+        iterate' f = tail . iterate f
+        genericMove a b z = LZ (iterate' a z) z (iterate' b z)
+        listLeft (LZ (a:as) x bs)  = LZ as a (x:bs)
+        listRight (LZ as x (b:bs)) = LZ (x:as) b bs
+#+END_SRC
 *** TODO ~IO~ использует абстракцию монад, какой аналог есть в мире комонад?
-*** TODO Напишите класс ~ComonadTrans~
-*** TODO Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
+*** DONE Напишите класс ~ComonadTrans~
+#+BEGIN_SRC haskell
+class ComonadTrans t where
+    lower :: Comonad w \Rightarrow t w a \rightarrow w a
+#+END_SRC
+*** DONE Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
+#+BEGIN_SRC haskell
+method
+    wa> expr1
+    wb> expr2
+    wc> expr3
+#+END_SRC
+Такая штука выливается в это:
+#+BEGIN_SRC haskell
+\wa \rightarrow
+let wb =      extend (\this \rightarrow expr1) wa
+    wc =      extend (\this \rightarrow expr2) wb
+in  extract $ extend (\this \rightarrow expr3) wc
+#+END_SRC
 ** [0/8]Question 16: Idris
 *** TODO Реализуйте функцию ~take~ для вектора на Idris
 *** TODO Реализуйте функцию ~filter~ для вектора на Idris
