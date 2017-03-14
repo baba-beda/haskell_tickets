@@ -209,7 +209,7 @@ traverse f = sequence . fmap f
     foldMap | foldr
 *** DONE Укажите *minimal complete definition* для type class'а ~Traversable~
     traverse | sequenceA
-** [4/5]Question 5: Functors
+** [5/5]Question 5: Functors
 *** DONE Напишите законы *функтора*
 #+BEGIN_SRC haskell
 1. fmap id = id
@@ -233,7 +233,14 @@ instance Bifunctor Either where
     bimap f _ (Left a)  = Left  (f a)
     bimap _ g (Right b) = Right (g b)
 #+END_SRC
-*** TODO Реализуйте ~fmap~ через ~bind~
+*** DONE Реализуйте ~fmap~ через ~bind~
+#+BEGIN_SRC haskell
+(>>=) :: Monad m => m a -> (a -> m b) -> m b
+(<$>) :: Functor f => (a ->   b) -> f a -> f b
+(=<<) :: Monad   m => (a -> m b) -> m a -> m b
+
+f <$> a = a >>= (return . f)
+#+END_SRC
 ** [0/7]Question 6: Applicatives
 *** TODO Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
 *** TODO Напишите type class ~Applicative~ и его реализацию для ~ZipList~
@@ -291,7 +298,7 @@ Just 3
 *** DONE Реализуйте ~join~ через ~bind~.
 #+BEGIN_SRC haskell
 join :: Monad m => m (m a) -> m a
-(>>=) :: m a -> (a -> m b) -> m b
+(>>=) :: Monad m => m a -> (a -> m b) -> m b
 
 join x = x >>= id
 #+END_SRC 
