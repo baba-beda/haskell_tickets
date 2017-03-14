@@ -500,13 +500,13 @@ do let x = y
               Just y  -> runMaybeT (f y)
 #+END_SRC
 *** DONE Нарисуйте табличку отличий обычных типов и их трансформеров для известных вам трансформеров
-Base monad -> Transformer -> Original type -> Combined type
-Maybe -> MaybeT -> Maybe a -> m (Maybe a)
-Either -> EitherT -> Either a b -> m (Either a b)
-Writer -> WriterT -> (a, w) -> m (a, w)
-Reader -> ReaderT -> r -> a -> r -> m a
-State -> StateT -> s -> (a,s) -> s -> m (a, s)
-Cont -> ContT -> (a -> r) -> r -> (a -> m r) -> m r
+| Base monad | Transformer | Original type | Combined type     |
+| Maybe      | MaybeT      | Maybe a       | m (Maybe a)       |
+| Either     | EitherT     | Either a b    | m (Either a b)    |
+| Writer     | WriterT     | (a, w)        | m (a, w)          |
+| Reader     | ReaderT     | r -> a        | r -> m a          |
+| State      | StateT      | s -> (a,s)    | s -> m (a, s)     |
+| Cont       | ContT       | (a -> r) -> r | (a -> m r) -> m r |
 ** [0/10]Question 9: Strict Lazy
 *** TODO Что такое *irrefutable patterns* и зачем они нужны?
 *** TODO Что такое *Stream Fusion* и зачем он нужен?
@@ -518,11 +518,22 @@ Cont -> ContT -> (a -> r) -> r -> (a -> m r) -> m r
 *** TODO Что такое ~STRef~ и в чем отличие от ~IORef~?
 *** TODO Что такое *Deforestation*?
 *** TODO Чем плохо использовать ~IORef~ и ~IOArray~? Зачем нужны ~STRef~ и ~STArray~?
-** [0/4]Question 10: TemplateHaskell
-*** TODO Как можно посмотреть *AST-дерево* для выражения в Haskell?
-*** TODO Напишите не меньше трех применений *TemplateHaskell*
-*** TODO Что такое ~Q~ в типах функций Template Haskell?
-*** TODO В чем разница между ~[| |]~ и ~$()~?
+** [4/4]Question 10: TemplateHaskell
+*** DONE Как можно посмотреть *AST-дерево* для выражения в Haskell?
+#+BEGIN_SRC haskell
+  report :: Bool -> String -> Q ()
+#+END_SRC
+Но вообще цитирующими скобками же, наверное.
+*** DONE Напишите не меньше трех применений *TemplateHaskell*
+- Писать функции n аргументов
+- Генерировать автоматом инстансы
+- Что-то высчитывать во время компиляции, тип один раз и навсегда.
+- Парсить всякие структуры типа json
+- Генерировать автоматом линзы
+*** DONE Что такое ~Q~ в типах функций Template Haskell?
+~Q~ - монада цитирования, которая позволяет автоматически генерировать уникальные имена для переменных с помощью монадической функции ~newName :: String -> Q Name~.
+*** DONE В чем разница между ~[| |]~ и ~$()~?
+~[| |]~ - quasi quotes, ~$()~ - вклейка (splice). Цитирующие скобки преобразуют конкретный хаскель-код в структуру ~Exp~ (получают AST), а вклейка - подставляет AST на место шаблона, поэтому это взаимно обратные операции.
 ** [3/10]Question 11: Lenses
 *** TODO Что такое изоморфизм (~Iso~)?
 *** TODO Чем линзы отличаются от призм?
