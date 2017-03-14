@@ -240,7 +240,18 @@ instance Bifunctor Either where
 
 f <$> a = a >>= (return . f)
 #+END_SRC
-** [4/9]Question 6: Applicatives
+** [6/10]Question 6: Applicatives
+*** DONE Напишите законы *аппликатива*
+#+BEGIN_SRC haskell
+1. identity
+   pure id <*> v = v
+2. composition
+   pure (.) <*> u <*> v <*> w = u <*> (v <*> w)
+3. homomorphism
+   pure f <*> pure x = pure (f x)
+4. interchange
+   u <*> pure y = pure ($ y) <*> u
+#+END_SRC
 *** DONE Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
 #+BEGIN_SRC haskell
 class Functor f => Applicative f where
@@ -291,10 +302,20 @@ instance Applicative ZipList where
     pure x                        = ZipList (repeat x)
     (ZipList fs) <*> (ZipList xs) = ZipList (zipWith ($) fs gs)
 #+END_SRC
-*** TODO Реализуйте функцию ~liftA3~
+*** DONE Реализуйте функцию ~liftA3~
+#+BEGIN_SRC haskell
+liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
+liftA3 f a b c = f <$> a <*> b <*> c
+-- насколько я понимаю, так можно проворачивать с любым числом аргументов
+#+END_SRC
 *** TODO Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
 *** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
+#+BEGIN_SRC haskell
+#+END_SRC
 *** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
+#+BEGIN_SRC haskell
+eitherA 
+#+END_SRC
 *** TODO Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
 ** [14/16]Question 7: Monads
 *** DONE Что такое монада?
