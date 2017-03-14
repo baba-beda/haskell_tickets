@@ -588,7 +588,7 @@ do
 | Reader     | ReaderT     | r -> a        | r -> m a          |
 | State      | StateT      | s -> (a,s)    | s -> m (a, s)     |
 | Cont       | ContT       | (a -> r) -> r | (a -> m r) -> m r |
-** [10/10]Question 9: Strict Lazy
+** [11/11]Question 9: Strict Lazy
 *** DONE Что такое *irrefutable patterns* и зачем они нужны?
 Ленивые паттерны. Матчинг значения v на паттерн ~pat всегда успешный, независимо от pat. Может понадобиться, если у нас есть бесконечная структура, определенная рекурсивно.
 *** DONE Что такое *Stream Fusion* и зачем он нужен?
@@ -613,6 +613,13 @@ do
 #+END_SRC
 *** DONE Чем плохо использовать ~IORef~ и ~IOArray~? Зачем нужны ~STRef~ и ~STArray~?
 ~IOArray~ не очень мутабельный, IO-монада дает больше возможностей, но они не всегда нужны. А еще ST-операции можно делать в чистых функциях. Вообще ~STRef~ используем, когда мутабельность нам не снаружи дают, а она является деталью имплементации, и снаружи наша деятельность кажется вполне себе чистой.
+*** DONE WHNF. Пример в ней и не в ней
+    CLOSED: [2017-03-14 Вт 08:58]
+An expression is in weak head normal form (WHNF), if it is either:
+  - a constructor (eventually applied to arguments) like True, Just (square 42) or (:) 1
+  - a built-in function applied to too few arguments (perhaps none) like (+) 2 or sqrt.
+  - or a lambda abstraction \x -> expression.
+An expression in weak head normal form has been evaluated to the outermost data constructor or lambda abstraction (the head). Sub-expressions may or may not have been evaluated. Therefore, every normal form expression is also in weak head normal form, though the opposite does not hold in general WHNF: \x -> x + 2 NOT WHNF: (\x -> x + 2) 3
 ** [4/4]Question 10: TemplateHaskell
 *** DONE Как можно посмотреть *AST-дерево* для выражения в Haskell?
 #+BEGIN_SRC haskell
