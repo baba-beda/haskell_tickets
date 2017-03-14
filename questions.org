@@ -636,7 +636,9 @@ An expression in weak head normal form has been evaluated to the outermost data 
 ~Q~ - монада цитирования, которая позволяет автоматически генерировать уникальные имена для переменных с помощью монадической функции ~newName :: String -> Q Name~.
 *** DONE В чем разница между ~[| |]~ и ~$()~?
 ~[| |]~ - quasi quotes, ~$()~ - вклейка (splice). Цитирующие скобки преобразуют конкретный хаскель-код в структуру ~Exp~ (получают AST), а вклейка - подставляет AST на место шаблона, поэтому это взаимно обратные операции.
-** [6/10]Question 11: Lenses
+** [7/11]Question 11: Lenses
+*** DONE Зачем нужны линзы?
+Чтобы в сложных структурах(записях) удобно доставать и изменять значения.
 *** DONE Что такое изоморфизм (~Iso~)?
 Изоморфизм - связь между эквивалентными типами. ~Iso~ - пара маппингов из первого типа во второй и из второго с первый, таких, что:
 #+BEGIN_SRC haskell
@@ -663,7 +665,7 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 *** TODO Напишите функцию ~lens~, которая принимает геттер и сеттер и возвращает линзу
 *** DONE Укажите операторные обозначений функций ~view~, ~set~, ~over~. Есть ли отличие в типах функций и их операторных выражений?
 view == (^.), set == (.~), over == (%~). Отличий не знаю.
-** [8/8]Question 12: Threads
+** [10/10]Question 12: Threads
 *** DONE Что такое ~STM~ (коротко), что позволяет делать и какие есть функции по работе с ним?
 Software Transactional Memory - абстракция для concurrent communication, хороша тем, что две concurrent абстракции можно легко слепить в одну и не придется светить деталями реализации; позволяет выполнить транзакцию (либо все операции успешно, либо откат). Функции ~newTVar/readTVar/writeTVar, atomically, retry, orElse~.
 *** DONE В чем отличие Haskell потоков от, например, потоков в Java?
@@ -697,7 +699,11 @@ RunTime System. 50k строк сишного кода, хайлайты:
 *** DONE Что делает ~forkIO~? Чем он отличается от ~forkFinally~?
 ~forkIO~ создает новый легковесный тред, где запустится IO, переданное в качестве аргумента, и возвращает его айдишник. Почему-то игнорирует исключения про дедлоки и убийство треда и пробрасывает остальные исключения как обычно.
 ~forkFinally~ форкает тред и, когда тот должен умереть, вызывает функцию, переданную аргументом, на эксепшне или возвращаемом значении. Своего рода хэндлер чего-то.
-** [5/5]Question 13: forall
+*** DONE Как в хаскеле реализована concurency?
+Par, Strategy, forkIO, MVar, STM, Async
+*** DONE Что такое spark и его флаги
+Мини тред, занятый одним вычислением, соответственно легковесный и их можно завести очень много converted - useful work overflowed - sparks generated after spark pool limit achieved dud - already evaluated at the moment of applying `rpar` GC’d - unused and thrown away (ignored) => garbage collector fizzled - was unevluated at the time it was sparked but was later evaluated independently by the program
+** [6/6]Question 13: forall
 *** DONE Напишите, как иметь список объектов разных функторов, внутри каждого из которых значения одинакового типа, чтобы иметь возможность применить функции из этого значения в другое?
 #+BEGIN_SRC haskell
 data FunctorBox a = forall f . Functor f => FB (f a)
@@ -730,6 +736,10 @@ fmapFB f = \(FB a) -> FB (f <$> a)
             nubbedList = nub inputList
   -- /show
 #+END_SRC
+*** DONE Написать fmap с forall
+#+BEGIN_SRC haskell
+fmap :: forall f . forall a b . (a -> b) -> f a -> f b
+#+end_src
 ** [4/5]Question 14: Advanced types
 *** DONE Что такое *typed holes* и зачем они нужны?
 С их помощью можно спросить у компилятора, какого типа должно быть твое что-то.
