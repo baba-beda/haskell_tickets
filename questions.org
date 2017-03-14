@@ -32,10 +32,14 @@
 2. Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 3. Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 4. Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-** [13/16]Question 2: Basic Syntax
+** [16/18]Question 2: Basic Syntax
 *** TODO Имеется класс типов: ~class C a where maxInt :: Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
-*** TODO Как обновить ~f~ в ~data A = A { f :: Int -> Int }; c = A { b = (+1) }~?
+*** DONE Как обновить ~f~ в ~data A = A { f :: Int -> Int }; c = A { b = (+1) }~?
+#+BEGIN_SRC haskell
+changeF :: A \rightarrow Int \rightarrow Int
+changeF A { f = _ } fff = A { f = fff }
+#+END_SRC
 *** DONE Что дает слово "*deriving*"? Что это в языке Haskell? 
 ~deriving~ позволяет неявно определять функции стандартных ~typeclass~'ов. Детали такой неявной реализации иногда зависят от компилятора. 
 *** DONE Напишите реализацию ~foldr~ и ~foldl~. И нарисуйте картинку вычисления
@@ -132,12 +136,20 @@ evenPairs = filter (even . uncurry (+))
 #+BEGIN_SRC haskell
 data Role a = A String a | B String [a]
 #+END_SRC
-** [8/10]Question 3: Kinds
+*** DONE Когда стоит описывать функцию, зависящую от type класса, внутри, а когда снаружи?
+Когда функция изменяет класс или переводит класс во что-то другое - лучше внутри, если хотим использовать этот класс для вычисления, то снаружи.
+*** DONE Как писать функции и операторы в префиксной и инфиксной нотации?
+~(:)~ - это префиксная нотация, ~:~ - инфиксная
+~map f a~ - префиксная, ~f `map` a~ - инфиксная
+** [13/13]Question 3: Kinds
 *** DONE Приведите пример типа с kind'ом ~Constraint -> *~
 #+BEGIN_SRC haskell
 type P a = a => Int
 #+END_SRC
-*** TODO Приведите пример типа с kind'ом ~(* -> Constraint) -> Constraint~
+*** DONE Приведите пример типа с kind'ом ~(* -> Constraint) -> Constraint~
+#+BEGIN_SRC haskell
+type D a = (a Int, Num Int)
+#+END_SRC
 *** DONE Приведите пример типа с kind'ом ~(* -> *) -> Constraint~
 ~Monad, Functor, Applicative~
 *** DONE Приведите пример типа с kind'ом ~(* -> Constraint) -> *~
@@ -146,9 +158,16 @@ type P a = a Int => Int
 #+END_SRC
 *** DONE Приведите пример типа с kind'ом ~* -> Constraint~
 ~Num, Ord, Eq, Show~
+*** DONE Приведите пример типа с kind’ом ~(*->*)->*->*~
+~MaybeT~
+*** DONE Приведите пример типа с kind’ом ~(* -> *) -> *~
+#+BEGIN_SRC haskell
+type P a = a Int
+#+END_SRC
 *** DONE Укажите kind для ~Monad~
 ~(* -> *) -> Constraint~
-*** TODO Укажите kind следующего типа данных: ~data A f g = B (f g) (g f)~
+*** DONE Укажите kind следующего типа данных: ~data A f g = B (f g) (g f)~
+Не существует
 *** DONE Укажите kind следующего типа данных: ~data A f g = B (f g Int)~
 ~A :: (* -> * -> *) -> * -> *~
 *** DONE Укажите kind типа ~type C p = p Int => Int~
@@ -156,6 +175,8 @@ type P a = a Int => Int
 *** DONE Укажите kind типа ~type C p = (p Int, p Double)~
 ~C :: (* -> *) -> *~
 <<<<<<< HEAD
+*** DONE Укажите kind типа ~type D a = (a Int, Num Int)~
+~D :: (* -> Constraint) -> Constraint~
 ** [14/14]Question 4: Type hierarchy
 *** DONE Чему равно значение ~length (Left "hello")~ и почему?
 0
@@ -233,7 +254,7 @@ sequence = traverse id -- так?
     foldMap | foldr
 *** DONE Укажите *minimal complete definition* для type class'а ~Traversable~
     traverse | sequenceA
-** [5/5]Question 5: Functors
+** [6/6]Question 5: Functors
 *** DONE Напишите законы *функтора*
 #+BEGIN_SRC haskell
 1. fmap id = id
@@ -264,7 +285,14 @@ instance Bifunctor Either where
 
 f <$> a = a >>= (return . f)
 #+END_SRC
-** [6/10]Question 6: Applicatives
+*** DONE Реализуйте ~bind~ через ~join~ и ~fmap~
+#+BEGIN_SRC haskell
+(>>=) :: m a -> (a -> m b) -> m b
+fmap :: (a -> b) -> f a -> f b
+join :: m (m a) -> m a
+a >>= f = join (fmap f a)
+#+END_SRC
+** [10/11]Question 6: Applicatives
 *** DONE Напишите законы *аппликатива*
 #+BEGIN_SRC haskell
 1. identity
@@ -301,6 +329,19 @@ instance Applicative Maybe where
     Just f  <*> a = f <$> a
     Nothing <*> _ = Nothing
 #+END_SRC
+*** DONE Напишите type class ~Applicative~ и его реализацию для ~Either~
+#+BEGIN_SRC haskell
+class Functor f => Applicative f where
+    pure  :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b
+    (*>) :: f a -> f b -> f b
+    (<*) :: f a -> f b -> f a
+
+instance Applicative (Either e) where
+    pure          = Right
+    Left  e <*> _ = Left e
+    Right f <*> r = fmap f r
+#+END_SRC
 *** DONE Напишите type class ~Applicative~ и его реализацию для ~[]~
 #+BEGIN_SRC haskell
 class Functor f => Applicative f where
@@ -332,16 +373,26 @@ liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
 liftA3 f a b c = f <$> a <*> b <*> c
 -- насколько я понимаю, так можно проворачивать с любым числом аргументов
 #+END_SRC
-*** TODO Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
+*** DONE Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
+#+BEGIN_SRC haskell
+liftAA2 = liftA2 . liftA2
+#+END_SRC
 *** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
 #+BEGIN_SRC haskell
 #+END_SRC
-*** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
+*** DONE Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
 #+BEGIN_SRC haskell
-eitherA 
+eitherA :: (Alternative f) \Rightarrow f a \rightarrow f b \rightarrow f (Either a b)
+eitherA f1 f2 = fmap (Left) f1
 #+END_SRC
-*** TODO Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
-** [14/16]Question 7: Monads
+*** DONE Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
+#+BEGIN_SRC haskell
+getY :: (Applicative f) \Rightarrow (a \rightarrow b) \rightarrow f a \rightarrow f b
+getY = fmap
+getY = (<$>)
+getY g x = pure g <*> x
+#+END_SRC
+** [20/20]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому знаению.
 #+BEGIN_SRC haskell
@@ -418,6 +469,26 @@ instance Monad (Either a) where
     return  = Right
     Right r >>= f = f r
     Left l  >>= _ = Left l
+#+END_SRC
+*** DONE Реализуйте ~Monad~ для ~((->) r)~
+#+BEGIN_SRC haskell
+instance Monad ((->) r) where
+    return = const
+    f >>= k = \r -> k (f r) r
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для ~Maybe~
+#+BEGIN_SRC haskell
+instance Monoid a => Monoid (Maybe a) where
+    mempty = Nothing
+    Nothing `mappend` m = m
+    m `mappend` Nothing = m
+    Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для ~(->)~
+#+BEGIN_SRC haskell
+instance Monoid b => Monoid (a -> b) where
+    mempty _ = mempty
+    mappend f g x = f x `mappend` g x
 #+END_SRC
 *** DONE Напишите определение типа данных ~Writer~ и его ~instance Monad~
 #+BEGIN_SRC haskell
@@ -497,8 +568,22 @@ do let x = y
 #+END_SRC
 композиция монад?
 Композиция функций, возвращающих завернутое значение. 
-*** TODO Что такое ~IO~? Как теоретически это реализовано? 
-*** TODO Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
+*** DONE Что такое ~IO~? Как теоретически это реализовано? 
+#+BEGIN_SRC haskell
+data IO a :: * \rightarrow *
+instance Monad IO where
+    (>>=) = bindIO
+#+END_SRC
+*** DONE Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
+unsafeInterleaveIO~ дает дополнительные гарантии на порядок операций, идейно так реализовано:
+#+BEGIN_SRC haskell
+do
+    before
+    unsafeInterleaveIO side
+    after
+#+END_SRC
+Гарантируется, что то, что в ~side~ всегда выполнится после ~before~.
+~unsafePerformIO~ таких гарантий не дает.
 ** [7/7]Question 8: Trans
 *** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
 #+BEGIN_SRC haskell
@@ -592,7 +677,9 @@ do let x = y
 ~Q~ - монада цитирования, которая позволяет автоматически генерировать уникальные имена для переменных с помощью монадической функции ~newName :: String -> Q Name~.
 *** DONE В чем разница между ~[| |]~ и ~$()~?
 ~[| |]~ - quasi quotes, ~$()~ - вклейка (splice). Цитирующие скобки преобразуют конкретный хаскель-код в структуру ~Exp~ (получают AST), а вклейка - подставляет AST на место шаблона, поэтому это взаимно обратные операции.
-** [6/10]Question 11: Lenses
+** [8/12]Question 11: Lenses
+*** DONE Зачем нужны линзы
+Чтобы в сложных структурах(записях) удобно доставать и изменять значения.
 *** DONE Что такое изоморфизм (~Iso~)?
 Изоморфизм - связь между эквивалентными типами. ~Iso~ - пара маппингов из первого типа во второй и из второго с первый, таких, что:
 #+BEGIN_SRC haskell
@@ -619,7 +706,10 @@ iso :: (s -> a) -> (b -> t) -> Iso s t a b
 *** TODO Напишите функцию ~lens~, которая принимает геттер и сеттер и возвращает линзу
 *** DONE Укажите операторные обозначений функций ~view~, ~set~, ~over~. Есть ли отличие в типах функций и их операторных выражений?
 view == (^.), set == (.~), over == (%~). Отличий не знаю.
-** [8/8]Question 12: Threads
+*** DONE Реализация view
+Не понятно к чему это, ну тип view' :: obj -> field
+Как мы его делаем, есть поле car, ну и пишем car Person
+** [10/10]Question 12: Threads
 *** DONE Что такое ~STM~ (коротко), что позволяет делать и какие есть функции по работе с ним?
 Software Transactional Memory - абстракция для concurrent communication, хороша тем, что две concurrent абстракции можно легко слепить в одну и не придется светить деталями реализации; позволяет выполнить транзакцию (либо все операции успешно, либо откат). Функции ~newTVar/readTVar/writeTVar, atomically, retry, orElse~.
 *** DONE В чем отличие Haskell потоков от, например, потоков в Java?
@@ -653,7 +743,16 @@ RunTime System. 50k строк сишного кода, хайлайты:
 *** DONE Что делает ~forkIO~? Чем он отличается от ~forkFinally~?
 ~forkIO~ создает новый легковесный тред, где запустится IO, переданное в качестве аргумента, и возвращает его айдишник. Почему-то игнорирует исключения про дедлоки и убийство треда и пробрасывает остальные исключения как обычно.
 ~forkFinally~ форкает тред и, когда тот должен умереть, вызывает функцию, переданную аргументом, на эксепшне или возвращаемом значении. Своего рода хэндлер чего-то.
-** [5/5]Question 13: forall
+*** DONE Как в Haskell реализована *concurency*
+~Par, Strategy, forkIO, MVar, STM, Async~
+*** DONE Что такое *spark* и его флаги
+Мини тред, занятый одним вычислением, соответственно легковесный и их можно завести очень много
+converted - useful work
+overflowed - sparks generated after spark pool limit achieved
+dud - already evaluated at the moment of applying `rpar`
+GC'd - unused and thrown away (ignored) => garbage collector
+fizzled - was unevluated at the time it was sparked but was later evaluated independently by the program
+** [6/6]Question 13: forall
 *** DONE Напишите, как иметь список объектов разных функторов, внутри каждого из которых значения одинакового типа, чтобы иметь возможность применить функции из этого значения в другое?
 #+BEGIN_SRC haskell
 data FunctorBox a = forall f . Functor f => FB (f a)
@@ -685,6 +784,10 @@ fmapFB f = \(FB a) -> FB (f <$> a)
             nubbedList :: [a]
             nubbedList = nub inputList
   -- /show
+#+END_SRC
+*** DONE Написать ~fmap~ с ~forall~
+#+BEGIN_SRC haskell
+fmap :: forall f . forall a b . (a \rightarrow b) \rightarrow f a \rightarrow f b
 #+END_SRC
 ** [4/5]Question 14: Advanced types
 *** DONE Что такое *typed holes* и зачем они нужны?
@@ -721,19 +824,142 @@ class Mult a b c | a b -> c where
   (*) :: a -> b -> c
 #+END_SRC
 Классический (и единственный) пример использования - перемножение матриц/векторов/скаляров, тайпкласс указан выше.
-** [0/11]Question 15: Comonads
-*** TODO Напишите пример использования *комонад* 
-*** TODO Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
-*** TODO Напишите, какие комонады двойственны монадам ~Traced, Store, Env~
-*** TODO Напишите комонаду ~Stream~ и инстанс ~Comonad~ для нее.
-*** TODO Напишите комонаду ~Env~ и инстанс ~Comonad~ для нее.
-*** TODO Напишите комонаду ~Store~ и инстанс ~Comonad~ для нее.
-*** TODO Напишите комонаду ~Traced~ и инстанс ~Comonad~ для нее.
-*** TODO Реализуйте ~instance Comonad~ для обычного ~Zipper~
+*** DONE Пример функции 2-го ранга
+#+BEGIN_SRC haskell
+Rank 0: Int
+Rank 1: forall a . a -> Int
+Rank 2: (forall a . a -> Int) -> Int
+Rank 3: ((forall a . a -> Int) -> Int) -> Int
+
+foo :: (forall a . a -> a) -> (Char,Bool)
+foo f = (f 'c', f True)
+#+END_SRC
+*** DONE Что делает -XDataKinds
+Заставляет создавать компилятор кайнды для нашей даты
+Промоутит простые типы до кайндов
+*** DONE GADT
+Generalized algebraic datatypes или просто ГАДы
+Generalized algebraic datatypes, or simply GADTs, are a generalization of the algebraic data types that you are familiar with. Basically, they allow you to explicitly write down the types of the constructors.
+** [12/13]Question 15: Comonads
+*** DONE Напишите пример использования *комонад*
+#+BEGIN_SRC haskell
+type Option = String
+data Config = MakeConfig [Option]
+type ConfigBuilder = Traced [Option] Config
+
+profile :: ConfigBuilder \rightarrow Config
+profile builder = runTraced builder ["-prof", "-auto-all"]
+
+goFaster :: ConfigBuilder \rightarrow Config
+goFaster builder = runTraced builder ["-O2"]
+
+ghci> extract (traced defaultConfig =>> goFaster =>> profile)
+MakeConfig ["-Wall","-prof","-auto-all","-O2"]
+#+END_SRC
+*** DONE Напишите, какие комонады двойственны монадам ~Reader, Writer, State~
+~Env~, ~Traced~ и ~Store~ соответственно.
+*** DONE Напишите, какие комонады двойственны монадам ~Traced, Store, Env~
+~Writer~, ~State~ и ~Reader~ соответственно.
+*** DONE Напишите комонаду ~Stream~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+data Stream a = Cons a (Stream a)
+
+instance Functor Stream where
+    fmap f (Cons x xs) = Cons (f x) (fmap f xs)
+
+instance Comonad Stream where
+    extract (Cons x _) = x
+    duplicate xs@(Cons _ xs') = Cons xs (duplicate xs')
+    extend f xs@(Cons _ xs') = Cons (f xs) (extend f xs')
+#+END_SRC
+*** DONE Напишите комонаду ~Env~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+data Env e a = Env e a
+
+instance Comonad (Env a) where
+    extract (Env _ a) = a
+    extend f env@(Env e _) = Env e (f env)
+#+END_SRC
+*** DONE Напишите комонаду ~Store~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+data Store s a = Store (s \rightarrow a) s
+
+instance Comonad (Store s) where
+    extract (Store f s) = f s
+    extend f (Store g s) = Store (f . Store g) s
+#+END_SRC
+*** DONE Напишите комонаду ~Traced~ и инстанс ~Comonad~ для нее.
+#+BEGIN_SRC haskell
+newtype Traced m a = Traced { runTraced :: m \rightarrow a }
+
+instance Monoid m \Rightarrow Comonad (Traced m) where
+    extract (Traced ma) = ma mempty
+    extend f (Traced ma) = Traced $ \m \rightarrow f (Traced $ \m' \rightarrow ma (m <> m'))
+#+END_SRC
+*** DONE Реализуйте ~instance Comonad~ для обычного ~Zipper~
+#+BEGIN_SRC haskell
+data ListZipper a = LZ [a] a [a]
+
+instance Functor ListZipper where
+    fmap f (LZ ls x rs) = LZ (fmap f ls) (f x) (fmap f rs)
+
+instance Comonad ListZipper where
+    extract (LZ _ x _) = x
+    duplicate = genericMove listLeft listRight
+      where
+        iterate' f = tail . iterate f
+        genericMove a b z = LZ (iterate' a z) z (iterate' b z)
+        listLeft (LZ (a:as) x bs)  = LZ as a (x:bs)
+        listRight (LZ as x (b:bs)) = LZ (x:as) b bs
+#+END_SRC
 *** TODO ~IO~ использует абстракцию монад, какой аналог есть в мире комонад?
-*** TODO Напишите класс ~ComonadTrans~
-*** TODO Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
-** [0/8]Question 16: Idris
+*** DONE Напишите класс ~ComonadTrans~
+#+BEGIN_SRC haskell
+class ComonadTrans t where
+    lower :: Comonad w \Rightarrow t w a \rightarrow w a
+#+END_SRC
+*** DONE Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
+#+BEGIN_SRC haskell
+method
+    wa> expr1
+    wb> expr2
+    wc> expr3
+#+END_SRC
+Такая штука выливается в это:
+#+BEGIN_SRC haskell
+\wa \rightarrow
+let wb =      extend (\this \rightarrow expr1) wa
+    wc =      extend (\this \rightarrow expr2) wb
+in  extract $ extend (\this \rightarrow expr3) wc
+#+END_SRC
+*** DONE ~extend~ для ~comonad~
+#+BEGIN_SRC haskell
+class Functor w => Comonad w where
+    extract   :: w a -> a
+    (<<=)     :: (w a -> b) -> w a -> w b  -- extend
+    duplicate :: w a -> w (w a)
+extend f  = fmap f . duplicate
+duplicate = extend id
+fmap f    = extend (f . extract)
+
+data [a] = [] | a : [a]
+data ListZipper a = LZ [a] a [a]
+instance Functor ListZipper where
+    fmap f (LZ ls x rs) = LZ (map f ls) (f x) (map f rs)
+extract :: ListZipper a -> a
+extract (LZ _ x _) = x
+#+END_SRC
+*** DONE ~Zipper~
+Такая штуковина, которая работает с бесконечными структурами, и ползает по ним с помощью курсора, помогает считать значения, зависящие от соседей
+#+BEGIN_SRC haskell
+data [a] = [] | a : [a]
+data ListZipper a = LZ [a] a [a]
+listLeft, listRight :: ListZipper a -> ListZipper a
+-- Сдвиг вправо и влево
+listLeft  (LZ (a:as) x bs) = LZ as a (x:bs)
+listRight (LZ as x (b:bs)) = LZ (x:as) b bs
+#+END_SRC
+** [4/12]Question 16: Idris
 *** TODO Реализуйте функцию ~take~ для вектора на Idris
 *** TODO Реализуйте функцию ~filter~ для вектора на Idris
 *** TODO Реализуйте функцию ~head~ для списка на Idris, которая компилируется только с гарантированно непустыми списками.
@@ -741,4 +967,22 @@ class Mult a b c | a b -> c where
 *** TODO Что такое ~[| |]~-идиома в Idris?
 *** TODO Что такое ~!~-идиома в Idris?
 *** TODO Что такое ~_|_-eliminator~? Зачем это надо?
-*** TODO Что такое "*тотальность*" и какие преимущества она дает? 
+*** TODO Что такое "*тотальность*" и какие преимущества она дает?
+*** DONE Какие парадигмы использует Irdis
+Totality
+Strict evalution
+Theorem proving
+DSL
+Extensible effects
+*** DONE Зависимые типы в idris и зачем они нужны
+Зависимый тип в информатике и логике — тип, который зависит от некоторого значения.
+К примеру, тип, описывающий n-кортежи действительных чисел является зависимым, так как он «зависит» от величины n.
+типы функций тогда могут принимать вид «функция, принимающая сообщение, подписанное некоторым пользователем, и возвращающая данные этого пользователя», вместо более распространённого «функция, принимающая сообщение и возвращающая данные пользователя», что ведёт к намного более точным спецификациям. Более того, это даёт возможность, так сказать, перейти от подлежащих к сказуемым, использовать принцип «высказывания как типы»: «5 больше 3», «неверно, что 5 больше 3», «7 является простым числом», «Василий получил 2 сообщения».
+*** DONE Отличие irdis от разных языков
+Идрис сочетает в себе особенности относительно мейнстримовых языков функционального программирования с функциями, заимствованных из систем автоматического доказательства теорем, фактически размывает границу между этими двумя видами программного обеспечения.
+*** DONE Пример кода на irdis
+#+BEGIN_SRC idris
+(++) : Vect n a -> Vect m a -> Vect (n + m) a
+(++) Nil       ys = ys
+(++) (x :: xs) ys = x :: xs ++ ys
+#+END_SRC
