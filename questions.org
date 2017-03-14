@@ -240,9 +240,57 @@ instance Bifunctor Either where
 
 f <$> a = a >>= (return . f)
 #+END_SRC
-** [0/7]Question 6: Applicatives
-*** TODO Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
-*** TODO Напишите type class ~Applicative~ и его реализацию для ~ZipList~
+** [4/9]Question 6: Applicatives
+*** DONE Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
+#+BEGIN_SRC haskell
+class Functor f => Applicative f where
+    pure  :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b
+    (*>) :: f a -> f b -> f b
+    (<*) :: f a -> f b -> f a
+
+instance Applicative ((->) r) where
+    pure x = \_ -> x
+    f <*> g = \x -> f x (g x)
+#+END_SRC
+*** DONE Напишите type class ~Applicative~ и его реализацию для ~Maybe~
+#+BEGIN_SRC haskell
+class Functor f => Applicative f where
+    pure  :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b
+    (*>) :: f a -> f b -> f b
+    (<*) :: f a -> f b -> f a
+
+instance Applicative Maybe where
+    pure = Just
+    Just f  <*> a = f <$> a
+    Nothing <*> _ = Nothing
+#+END_SRC
+*** DONE Напишите type class ~Applicative~ и его реализацию для ~[]~
+#+BEGIN_SRC haskell
+class Functor f => Applicative f where
+    pure  :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b
+    (*>) :: f a -> f b -> f b
+    (<*) :: f a -> f b -> f a
+
+instance Applicative [] where
+    pure x    = [x]
+    fs <*> xs = [f x | x <- xs, f <- fs]
+#+END_SRC
+*** DONE Напишите type class ~Applicative~ и его реализацию для ~ZipList~
+#+BEGIN_SRC haskell
+class Functor f => Applicative f where
+    pure  :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b
+    (*>) :: f a -> f b -> f b
+    (<*) :: f a -> f b -> f a
+
+newtype ZipList a = zipList { getZipList :: [a] }
+instance Applicative ZipList where
+    pure x                        = ZipList (repeat x)
+    (ZipList fs) <*> (ZipList xs) = ZipList (zipWith ($) fs gs)
+#+END_SRC
 *** TODO Реализуйте функцию ~liftA3~
 *** TODO Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
 *** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
@@ -285,7 +333,6 @@ infixr 1  =<<
 9. join
 10. ifM
 11. (||^)
-*** TODO Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
 *** DONE Напишите тип функции ~join~ и приведите несколько примеров использования
 #+BEGIN_SRC haskell
 join :: Monad m => m (m a) -> m a
@@ -362,7 +409,12 @@ instance Monad (Cont r) where
     return a = Cont ($ a)
     Cont arr >>= f = Cont $ \br -> arr $ \a -> runCont (f a) br
 #+END_SRC
-*** TODO Что такое ~IO~? Как теоретически это реализовано? 
+*** DONE Напишите тип ~(>=>)~ и смысл этого оператора.
+#+BEGIN_SRC haskell
+(>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
+#+END_SRC
+композиция монад?
+Композиция функций, возвращающих завернутое значение. 
 *** DONE Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
 #+BEGIN_SRC haskell
 -- two-line do notation
@@ -395,12 +447,8 @@ do let x = y
 -- desugars to
 (\x -> z) y
 #+END_SRC
-*** DONE Напишите тип ~(>=>)~ и смысл этого оператора.
-#+BEGIN_SRC haskell
-(>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
-#+END_SRC
-композиция монад?
-Композиция функций, возвращающих завернутое значение. 
+*** TODO Что такое ~IO~? Как теоретически это реализовано? 
+*** TODO Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
 ** [0/7]Question 8: Trans
 *** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
 *** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~WriterT~
