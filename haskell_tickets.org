@@ -1088,19 +1088,12 @@ instance MonadCont (Cont r) where
 #+END_SRC
 * Ticket 8: RealWorld
 ** IO
-
-*IO* идет вразрез с концепцией чистоты Haskell. Никто не гарантирует, что два вызова одного
-и того же `getChar` дадут одинаковый результат. Компилятор считает все функции чистыми
-(кажется, это грязная ложь) и может соптимизировать "лишние" вызовы и вернуть один
-результат. 
-
+*IO* идет вразрез с концепцией чистоты Haskell. Никто не гарантирует, что два вызова одного и того же `getChar` дадут одинаковый результат. Компилятор считает все функции чистыми (кажется, это грязная ложь) и может соптимизировать "лишние" вызовы и вернуть один результат. 
 #+BEGIN_SRC haskell
   getchar :: Char
   get2chars = [getchar, getchar]
 #+END_SRC
-
 Порядок, в котором вернутся результаты, не определен в `getChar`.
-
 #+BEGIN_SRC haskell
   getchar   :: Int -> Char
   get2chars :: Int -> String
@@ -1174,7 +1167,7 @@ instance MonadCont (Cont r) where
 
 ** `do` notation: desugaring `>>`
 *** `(>>)` 
-заменяется на `do` в начале и \n в остальных случаях.
+заменяется на `do` в начале и в остальных случаях.
 #+BEGIN_SRC haskell
   main = do putStrLn "What is your name?"
             putStrLn "How old are you?"
