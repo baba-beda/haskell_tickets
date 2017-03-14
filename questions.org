@@ -264,7 +264,7 @@ instance Bifunctor Either where
 
 f <$> a = a >>= (return . f)
 #+END_SRC
-** [6/10]Question 6: Applicatives
+** [9/10]Question 6: Applicatives
 *** DONE Напишите законы *аппликатива*
 #+BEGIN_SRC haskell
 1. identity
@@ -332,15 +332,24 @@ liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
 liftA3 f a b c = f <$> a <*> b <*> c
 -- насколько я понимаю, так можно проворачивать с любым числом аргументов
 #+END_SRC
-*** TODO Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
+*** DONE Реализуйте функцию ~liftAA2 :: (Applicative f, Applicative g) => (a -> b -> c) -> f (g a) -> f (g b) -> f (g c)~
+#+BEGIN_SRC haskell
+liftAA2 = liftA2 . liftA2
+#+END_SRC
 *** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
 #+BEGIN_SRC haskell
 #+END_SRC
-*** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
+*** DONE Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
 #+BEGIN_SRC haskell
-eitherA 
+eitherA f1 f2 = fmap (Left) f1
 #+END_SRC
-*** TODO Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
+*** DONE Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
+#+BEGIN_SRC haskell
+getY :: (Applicative f) => (a -> b) -> f a -> f b
+getY = fmap
+getY = (<$>)
+getY g x = pure g <*> x
+#+END_SRC
 ** [19/19]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому знаению.
