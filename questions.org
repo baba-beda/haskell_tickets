@@ -32,12 +32,14 @@
 2. Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 3. Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 4. Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-** [16/18]Question 2: Basic Syntax
+** [15/18]Question 2: Basic Syntax
 *** TODO Имеется класс типов: ~class C a where maxInt :: Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
-*** DONE Как обновить ~f~ в ~data A = A { f :: Int -> Int }; c = A { b = (+1) }~?
+*** TODO Как обновить ~f~ в ~data A = A { f :: Int -> Int };~?
+/Нужно исправить и написать проще/
+
 #+BEGIN_SRC haskell
-changeF :: A \rightarrow Int \rightarrow Int
+changeF :: A -> Int -> Int
 changeF A { f = _ } fff = A { f = fff }
 #+END_SRC
 *** DONE Что дает слово "*deriving*"? Что это в языке Haskell? 
@@ -292,7 +294,7 @@ fmap :: (a -> b) -> f a -> f b
 join :: m (m a) -> m a
 a >>= f = join (fmap f a)
 #+END_SRC
-** [10/11]Question 6: Applicatives
+** [9/11]Question 6: Applicatives
 *** DONE Напишите законы *аппликатива*
 #+BEGIN_SRC haskell
 1. identity
@@ -380,10 +382,10 @@ liftAA2 = liftA2 . liftA2
 *** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
 #+BEGIN_SRC haskell
 #+END_SRC
-*** DONE Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
+*** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
 #+BEGIN_SRC haskell
-eitherA :: (Alternative f) \Rightarrow f a \rightarrow f b \rightarrow f (Either a b)
-eitherA f1 f2 = fmap (Left) f1
+eitherA :: (Alternative f) => f a -> f b -> f (Either a b)
+-- eitherA f1 f2 = fmap (Left) f1 НЕВЕРНО
 #+END_SRC
 *** DONE Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
 #+BEGIN_SRC haskell
@@ -392,7 +394,7 @@ getY = fmap
 getY = (<$>)
 getY g x = pure g <*> x
 #+END_SRC
-** [20/20]Question 7: Monads
+** [18/19]Question 7: Monads
 *** DONE Что такое монада?
 Монады применяют функции, которые возвращают завернутые значения, к завернутому знаению.
 #+BEGIN_SRC haskell
@@ -529,8 +531,10 @@ instance Monad (Cont r) where
 #+BEGIN_SRC haskell
 (>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
 #+END_SRC
-Композиция функций, возвращающих завернутое значение. =
-*** DONE Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
+Композиция функций, возвращающих завернутое значение. 
+*** TODO Покажите, синтаксическим сахаром для чего является ~do~-нотация (включая ~let~).
+/Недостаточно/
+
 #+BEGIN_SRC haskell
 -- two-line do notation
 do x <- m
@@ -562,12 +566,6 @@ do let x = y
 -- desugars to
 (\x -> z) y
 #+END_SRC
-*** DONE Напишите тип ~(>=>)~ и смысл этого оператора.
-#+BEGIN_SRC haskell
-(>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
-#+END_SRC
-композиция монад?
-Композиция функций, возвращающих завернутое значение. 
 *** DONE Что такое ~IO~? Как теоретически это реализовано? 
 #+BEGIN_SRC haskell
 data IO a :: * \rightarrow *
@@ -636,10 +634,12 @@ do
 | Reader     | ReaderT     | r -> a        | r -> m a          |
 | State      | StateT      | s -> (a,s)    | s -> m (a, s)     |
 | Cont       | ContT       | (a -> r) -> r | (a -> m r) -> m r |
-** [10/10]Question 9: Strict Lazy
+** [9/10]Question 9: Strict Lazy
 *** DONE Что такое *irrefutable patterns* и зачем они нужны?
 Ленивые паттерны. Матчинг значения v на паттерн ~pat всегда успешный, независимо от pat. Может понадобиться, если у нас есть бесконечная структура, определенная рекурсивно.
-*** DONE Что такое *Stream Fusion* и зачем он нужен?
+*** TODO Что такое *Stream Fusion* и зачем он нужен?
+/Нужно написать больше/
+
 Пишем что-нибудь вроде функций с бесконечными списками, аллоцируем слишком много памяти. Stream fusion превращает нашу функцию во что-то, что использует рекурсивную функцию, которая аллоцирует себе столько памяти, сколько нужно для *результата*. Вместо явной рекурсии можем использовать нерекурсивные функции над списком, которые используют допустимые функции ~map~, ~foldr~ и так далее. Тут стало слишком много Inception.
 *** DONE Напишите, что значит тип ~ST~ и напишите основные функции по работе с ним
 Монада, в которой есть мутабельные переменные и массивы, но при этом она referentially transparent. Strict state-transformer monad.
@@ -664,7 +664,7 @@ do
 ** [4/4]Question 10: TemplateHaskell
 *** DONE Как можно посмотреть *AST-дерево* для выражения в Haskell?
 #+BEGIN_SRC haskell
-  report :: Bool -> String -> Q ()
+-- report :: Bool -> String -> Q () НЕВЕРНО
 #+END_SRC
 Но вообще цитирующими скобками же, наверное.
 *** DONE Напишите не меньше трех применений *TemplateHaskell*
@@ -752,7 +752,7 @@ overflowed - sparks generated after spark pool limit achieved
 dud - already evaluated at the moment of applying `rpar`
 GC'd - unused and thrown away (ignored) => garbage collector
 fizzled - was unevluated at the time it was sparked but was later evaluated independently by the program
-** [6/6]Question 13: forall
+** [5/6]Question 13: forall
 *** DONE Напишите, как иметь список объектов разных функторов, внутри каждого из которых значения одинакового типа, чтобы иметь возможность применить функции из этого значения в другое?
 #+BEGIN_SRC haskell
 data FunctorBox a = forall f . Functor f => FB (f a)
@@ -761,7 +761,9 @@ FB :: forall {a} {f :: * -> *} . Functor f => f a -> FunctorBox a -- as ghci see
 fmapFB :: forall t a . (t -> a) -> FunctorBox t -> FunctorBox a
 fmapFB f = \(FB a) -> FB (f <$> a)
 #+END_SRC
-*** DONE Зачем нужно расширение ~ExistentialQuantification~?
+*** TODO Зачем нужно расширение ~ExistentialQuantification~?
+/Нужно написать больше/
+
 Для того, чтобы работать со значениями разных типов, но обладающими каким-то свойством (например, они одного класса), одинаково. Например, чтобы иметь возможность складывать такие значения в лист, получая тем самым гетерогенный лист, спрятав значения в некоторую "коробку" (/type hider/)
 *** DONE Зачем нужно расширение языка ~-XExplicitForall~?
 Чтобы явно аннотировать типы с использованием ~forall~
@@ -789,7 +791,7 @@ fmapFB f = \(FB a) -> FB (f <$> a)
 #+BEGIN_SRC haskell
 fmap :: forall f . forall a b . (a \rightarrow b) \rightarrow f a \rightarrow f b
 #+END_SRC
-** [4/5]Question 14: Advanced types
+** [6/8]Question 14: Advanced types
 *** DONE Что такое *typed holes* и зачем они нужны?
 С их помощью можно спросить у компилятора, какого типа должно быть твое что-то.
 #+BEGIN_SRC haskell
@@ -799,7 +801,9 @@ fmap :: forall f . forall a b . (a \rightarrow b) \rightarrow f a \rightarrow f 
   > Found hole ‘_f’ with type: Maybe a -> [Either a b] -> [Either a b]
   > Found hole ‘_z’ with type: [Either a b]
 #+END_SRC
-*** DONE Зачем нужно расширение языка ~-XTypeApplications~?
+*** TODO Зачем нужно расширение языка ~-XTypeApplications~?
+/Нужно написать больше/
+
 Позволяет задавать явные аргументы типов полиморфной функции, например ~map @Int @Bool isEven xs~. Решает проблему show/read, потому что мы явно задаем типы и все тайпчекается.
 #+BEGIN_SRC haskell
   answer_read = show (read @Int "3") -- "3" :: String
@@ -968,7 +972,7 @@ listRight (LZ as x (b:bs)) = LZ (x:as) b bs
 *** TODO Что такое ~!~-идиома в Idris?
 *** TODO Что такое ~_|_-eliminator~? Зачем это надо?
 *** TODO Что такое "*тотальность*" и какие преимущества она дает?
-*** DONE Какие парадигмы использует Irdis
+*** DONE Какие парадигмы использует Idris
 Totality
 Strict evalution
 Theorem proving
@@ -978,9 +982,9 @@ Extensible effects
 Зависимый тип в информатике и логике — тип, который зависит от некоторого значения.
 К примеру, тип, описывающий n-кортежи действительных чисел является зависимым, так как он «зависит» от величины n.
 типы функций тогда могут принимать вид «функция, принимающая сообщение, подписанное некоторым пользователем, и возвращающая данные этого пользователя», вместо более распространённого «функция, принимающая сообщение и возвращающая данные пользователя», что ведёт к намного более точным спецификациям. Более того, это даёт возможность, так сказать, перейти от подлежащих к сказуемым, использовать принцип «высказывания как типы»: «5 больше 3», «неверно, что 5 больше 3», «7 является простым числом», «Василий получил 2 сообщения».
-*** DONE Отличие irdis от разных языков
+*** DONE Отличие Idris от разных языков
 Идрис сочетает в себе особенности относительно мейнстримовых языков функционального программирования с функциями, заимствованных из систем автоматического доказательства теорем, фактически размывает границу между этими двумя видами программного обеспечения.
-*** DONE Пример кода на irdis
+*** DONE Пример кода на Idris
 #+BEGIN_SRC idris
 (++) : Vect n a -> Vect m a -> Vect (n + m) a
 (++) Nil       ys = ys
