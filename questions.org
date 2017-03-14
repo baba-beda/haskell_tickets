@@ -32,7 +32,7 @@
 2. Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 3. Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 4. Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-** [15/18]Question 2: Basic Syntax
+** [14/19]Question 2: Basic Syntax
 *** TODO Имеется класс типов: ~class C a where maxInt :: Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 *** TODO Как обновить ~f~ в ~data A = A { f :: Int -> Int };~?
@@ -91,9 +91,12 @@ flip id :: b -> (b -> c) -> c
 #+BEGIN_SRC haskell
 f :: A a -> Double
 #+END_SRC
-*** DONE В чем отличие ~data~ от ~newtype~?
+*** TODO В чем отличие ~data~ от ~newtype~?
+/Уточнить/
+
 ~newtype~ гарантирует, что данные будут иметь такой же вид в рантайме, как и завернутый тип. То есть Конструктор для ~newtype~ гарантированно стирается во время компиляции.
 ~data~ объявляет абсолютно новую структуру данных в рантайме.
+*** TODO В чем отличие ~newtype~ от ~type~? Приведите пример.
 *** DONE Что такое "*Currying* (каррирование)" и *функции высшего порядка*?
 *Каррирование* Вычисление функции, принимающей несколько аргументов, через несколько функций, принимающих один аргумент. 
 Например, для функции 2-х аргументов h:(A \times B) \to C оператор каррирования \Lambda выполняет преобразование \Lambda(h):A \to (B \to C). То есть \Lambda: ((A \times B) \to C) \to (A \to (B \to C)).
@@ -138,7 +141,7 @@ evenPairs = filter (even . uncurry (+))
 #+BEGIN_SRC haskell
 data Role a = A String a | B String [a]
 #+END_SRC
-*** DONE Когда стоит описывать функцию, зависящую от type класса, внутри, а когда снаружи?
+*** DONE Когда стоит описывать функцию, зависящую от ~typeclass~'а, внутри, а когда снаружи?
 Когда функция изменяет класс или переводит класс во что-то другое - лучше внутри, если хотим использовать этот класс для вычисления, то снаружи.
 *** DONE Как писать функции и операторы в префиксной и инфиксной нотации?
 ~(:)~ - это префиксная нотация, ~:~ - инфиксная
@@ -176,18 +179,21 @@ type P a = a Int
 ~C :: (* -> Constraint) -> *~
 *** DONE Укажите kind типа ~type C p = (p Int, p Double)~
 ~C :: (* -> *) -> *~
-<<<<<<< HEAD
 *** DONE Укажите kind типа ~type D a = (a Int, Num Int)~
 ~D :: (* -> Constraint) -> Constraint~
-** [14/14]Question 4: Type hierarchy
-*** DONE Чему равно значение ~length (Left "hello")~ и почему?
+** [15/18]Question 4: Type hierarchy
+*** TODO Чему равно значение ~length (Left "hello")~ и почему?
+/Написать подробнее/
+
 0
 #+BEGIN_SRC haskell
 length = foldr (\_ n -> 1 + n) 0
 #+END_SRC 
-*** DONE Чему равно значение ~length (Just [1..10])~ и почему?
+*** TODO Чему равно значение ~length (Just [1..10])~ и почему?
+/Написать подробнее/
+
 1
-*** DONE Напишите type class ~Traversable~
+*** DONE Напишите ~typeclass~ ~Traversable~
 #+BEGIN_SRC haskell
 class (Functor t, Foldable t) => Traversable t where
   traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
@@ -218,6 +224,7 @@ instance Traversable Maybe where
       traverse _ (Left x) = pure (Left x)
       traverse f (Right y) = Right <$> f y
 #+END_SRC
+*** TODO Напишите ~typeclass~ ~Foldable~
 *** DONE Напишите реализацию ~Foldable~ для списка 
 #+BEGIN_SRC haskell
 instance Foldable [] where
@@ -256,13 +263,48 @@ sequence = traverse id -- так?
     foldMap | foldr
 *** DONE Укажите *minimal complete definition* для type class'а ~Traversable~
     traverse | sequenceA
-** [6/6]Question 5: Functors
+*** DONE Напишите реализацию ~Monoid~ для ~Maybe~
+#+BEGIN_SRC haskell
+instance Monoid a => Monoid (Maybe a) where
+    mempty = Nothing
+    Nothing `mappend` m = m
+    m `mappend` Nothing = m
+    Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для ~(->)~
+#+BEGIN_SRC haskell
+instance Monoid b => Monoid (a -> b) where
+    mempty _ = mempty
+    mappend f g x = f x `mappend` g x
+#+END_SRC
+*** DONE Напишите реализацию ~Monoid~ для ~(a -> a)~. Используя это знание, выразите ~foldr~ через ~foldMap~
+   #+BEGIN_SRC haskell
+instance Monoid (b -> b) where
+    mempty _ = id
+    mappend  = (.)
+
+newtype Arrow b = Arrow { getArrow :: b -> b }
+-- для упрощения будем считать, что тип foldr следующий:
+foldr   :: (a -> b -> b) -> t a -> b -> b
+-- иначе придется задействовать flip, если сильно захочется, когда-нибудь будет реализовано
+foldMap :: Monoid m => (a -> m) -> t a -> m
+
+transform :: (a -> b -> b) -> a -> Arrow b
+transform = Arrow . f
+
+foldr f = getArrow . foldMap (transform f)
+#+END_SRC
+** [6/10]Question 5: Functors
 *** DONE Напишите законы *функтора*
 #+BEGIN_SRC haskell
 1. fmap id = id
 2. fmap (f . g)   = (fmap f) . (fmap g)
    fmap (f . g) F = fmap f (fmap g F)
 #+END_SRC
+*** TODO Напишите ~type class Functor~ и его реализацию для ~((->) r)~
+*** TODO Напишите ~type class Functor~ и его реализацию для ~Maybe~
+*** TODO Напишите ~type class Functor~ и его реализацию для ~Either~
+*** TODO Напишитe ~type class Functor~ и его реализацию для ~[]~
 *** DONE Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~ 
 #+BEGIN_SRC haskell
 (<<$>>) f w = (fmap $ fmap f) w
@@ -306,7 +348,7 @@ a >>= f = join (fmap f a)
 4. interchange
    u <*> pure y = pure ($ y) <*> u
 #+END_SRC
-*** DONE Напишите type class ~Applicative~ и его реализацию для ~((->) r)~
+*** DONE Напишите ~type class ~Applicative~ и его реализацию для ~((->) r)~
 #+BEGIN_SRC haskell
 class Functor f => Applicative f where
     pure  :: a -> f a
@@ -318,7 +360,7 @@ instance Applicative ((->) r) where
     pure x = \_ -> x
     f <*> g = \x -> f x (g x)
 #+END_SRC
-*** DONE Напишите type class ~Applicative~ и его реализацию для ~Maybe~
+*** DONE Напишите ~type class ~Applicative~ и его реализацию для ~Maybe~
 #+BEGIN_SRC haskell
 class Functor f => Applicative f where
     pure  :: a -> f a
@@ -331,7 +373,7 @@ instance Applicative Maybe where
     Just f  <*> a = f <$> a
     Nothing <*> _ = Nothing
 #+END_SRC
-*** DONE Напишите type class ~Applicative~ и его реализацию для ~Either~
+*** DONE Напишите ~type class ~Applicative~ и его реализацию для ~Either~
 #+BEGIN_SRC haskell
 class Functor f => Applicative f where
     pure  :: a -> f a
@@ -344,7 +386,7 @@ instance Applicative (Either e) where
     Left  e <*> _ = Left e
     Right f <*> r = fmap f r
 #+END_SRC
-*** DONE Напишите type class ~Applicative~ и его реализацию для ~[]~
+*** DONE Напишите ~type class ~Applicative~ и его реализацию для ~[]~
 #+BEGIN_SRC haskell
 class Functor f => Applicative f where
     pure  :: a -> f a
@@ -356,7 +398,7 @@ instance Applicative [] where
     pure x    = [x]
     fs <*> xs = [f x | x <- xs, f <- fs]
 #+END_SRC
-*** DONE Напишите type class ~Applicative~ и его реализацию для ~ZipList~
+*** DONE Напишите ~type class ~Applicative~ и его реализацию для ~ZipList~
 #+BEGIN_SRC haskell
 class Functor f => Applicative f where
     pure  :: a -> f a
@@ -380,8 +422,6 @@ liftA3 f a b c = f <$> a <*> b <*> c
 liftAA2 = liftA2 . liftA2
 #+END_SRC
 *** TODO Реализуйте функцию ~(<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)~
-#+BEGIN_SRC haskell
-#+END_SRC
 *** TODO Реализуйте функцию ~eitherA :: (Alternative f) => f a -> f b -> f (Either a b)~
 #+BEGIN_SRC haskell
 eitherA :: (Alternative f) => f a -> f b -> f (Either a b)
@@ -389,7 +429,7 @@ eitherA :: (Alternative f) => f a -> f b -> f (Either a b)
 #+END_SRC
 *** DONE Есть функция ~g :: a -> b~ и объект ~x :: Applicative f => f a~. Напишите два разных способа получить объект ~y :: Applicative f => f b~ из ~x~ с использованием ~g~.
 #+BEGIN_SRC haskell
-getY :: (Applicative f) \Rightarrow (a \rightarrow b) \rightarrow f a \rightarrow f b
+getY :: (Applicative f) => (a -> b) -> f a -> f b
 getY = fmap
 getY = (<$>)
 getY g x = pure g <*> x
@@ -477,20 +517,6 @@ instance Monad (Either a) where
 instance Monad ((->) r) where
     return = const
     f >>= k = \r -> k (f r) r
-#+END_SRC
-*** DONE Напишите реализацию ~Monoid~ для ~Maybe~
-#+BEGIN_SRC haskell
-instance Monoid a => Monoid (Maybe a) where
-    mempty = Nothing
-    Nothing `mappend` m = m
-    m `mappend` Nothing = m
-    Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)
-#+END_SRC
-*** DONE Напишите реализацию ~Monoid~ для ~(->)~
-#+BEGIN_SRC haskell
-instance Monoid b => Monoid (a -> b) where
-    mempty _ = mempty
-    mappend f g x = f x `mappend` g x
 #+END_SRC
 *** DONE Напишите определение типа данных ~Writer~ и его ~instance Monad~
 #+BEGIN_SRC haskell
