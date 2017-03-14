@@ -741,7 +741,7 @@ liftM2   :: Monad m => (a -> b -> c) -> m a -> m b -> m c
 ifM   :: Monad m => m Bool -> m a -> m a -> m a
 (||^) :: Monad m => m Bool -> m Bool -> m Bool
 #+END_SRC
-* Ticket 6. Functors & Applicatives
+* Ticket 6. Functors & Applicative
 ** Functor
 Применяет функцию к значению в контексте
 #+BEGIN_SRC haskell
@@ -1541,4 +1541,3 @@ showAll :: [ShowBox a] -> [String]  -- won't work
 showAll = map (\(SB a) -> show a)
 #+END_SRC
 * Ticket 16: Idris
-
