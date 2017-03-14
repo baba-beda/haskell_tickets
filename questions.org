@@ -395,14 +395,58 @@ do let x = y
 #+END_SRC
 композиция монад?
 Композиция функций, возвращающих завернутое значение. 
-** [0/7]Question 8: Trans
-*** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
-*** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~WriterT~
-*** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~MaybeT~
-*** TODO Напишите класс типов ~MonadTrans~ и реализуйте его для ~ReaderT~
-*** TODO Напишите тип ~StateT~ и то, как определен ~State~ через ~StateT~
-*** TODO Напишите тип ~MaybeT~ и реализуйте его инстанс ~Monad~
-*** TODO Нарисуйте табличку отличий обычных типов и их трансформеров для известных вам трансформеров
+** [7/7]Question 8: Trans
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~StateT~
+#+BEGIN_SRC haskell
+  class MonadTrans t where    -- t :: (* -> *) -> * -> *
+      lift :: Monad m => m a -> t m a
+  instance MonadTrans (StateT s) where
+      lift m = StateT $ \s -> do
+          a <- m
+          return (a, s)
+#+END_SRC
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~WriterT~
+#+BEGIN_SRC haskell
+  instance (Monoid w) => MonadTrans (WriterT w) where
+      lift m = WriterT $ do
+          a <- m
+          return (a, mempty)
+#+END_SRC
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~MaybeT~
+#+BEGIN_SRC haskell
+  instance MonadTrans MaybeT where
+      lift = MaybeT . liftM Just
+#+END_SRC
+*** DONE Напишите класс типов ~MonadTrans~ и реализуйте его для ~ReaderT~
+#+BEGIN_SRC haskell
+  instance MonadTrans ReaderT where
+     lift m = ReaderT (const m)
+#+END_SRC
+*** DONE Напишите тип ~StateT~ и то, как определен ~State~ через ~StateT~
+#+BEGIN_SRC haskell
+  newtype StateT s m a = StateT { runStateT :: s -> m (a,s) }
+  type State s = StateT s Identity
+#+END_SRC
+*** DONE Напишите тип ~MaybeT~ и реализуйте его инстанс ~Monad~
+#+BEGIN_SRC haskell
+  newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
+  instance (Monad m) => Monad (MaybeT m) where
+      fail _ = MaybeT (return Nothing)
+      return = lift . return
+      x >>= f = MaybeT $ do
+          v <- runMaybeT x
+          case v of
+              Nothing -> return Nothing
+              Just y  -> runMaybeT (f y)
+#+END_SRC
+*** DONE Нарисуйте табличку отличий обычных типов и их трансформеров для известных вам трансформеров
+Base monad -> Transformer -> Original type -> Combined type
+Maybe -> MaybeT -> Maybe a -> m (Maybe a)
+Either -> EitherT -> Either a b -> m (Either a b)
+Writer -> WriterT -> (a, w) -> m (a, w)
+Reader -> ReaderT -> r -> a -> r -> m a
+State -> StateT -> s -> (a,s) -> s -> m (a, s)
+Cont -> ContT -> (a -> r) -> r -> (a -> m r) -> m r
 ** [0/10]Question 9: Strict Lazy
 *** TODO Что такое *irrefutable patterns* и зачем они нужны?
 *** TODO Что такое *Stream Fusion* и зачем он нужен?
