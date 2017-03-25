@@ -32,15 +32,18 @@
 2. Высокая поддерживаемость больших проектов :: Изменения могут быть верифицированы компилятором, и типы являются частью документации программы, облегчая ее понимание
 3. Автоматизированная обработка программ :: Например, автоматический рефакторинг, как в средах IDEA или Eclipse
 4. Оптимизация кода :: Код, написанный на статически типизированном языке, проще оптимизировать, так что в среднем статически типизированный язык эффективнее динамически типизированных
-** [14/19]Question 2: Basic Syntax
+** [16/19]Question 2: Basic Syntax
 *** TODO Имеется класс типов: ~class C a where maxInt :: Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
-*** TODO Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
-*** TODO Как обновить ~f~ в ~data A = A { f :: Int -> Int };~?
-/Нужно исправить и написать проще/
-
+*** DONE Имеется класс типов: ~class C a where intGetter :: a -> Int~. Реализуйте данный класс типов для какого-нибудь типа данных.
 #+BEGIN_SRC haskell
-changeF :: A -> Int -> Int
-changeF A { f = _ } fff = A { f = fff }
+data MyBool = MyBool Bool
+instance C MyBool where
+  intGetter (MyBool True) = 1
+  intGetter _ = 0
+#+END_SRC
+*** DONE Как обновить ~f~ в ~data A = A { f :: Int -> Int };~?
+#+BEGIN_SRC haskell
+cc = c {f = (+42)}
 #+END_SRC
 *** DONE Что дает слово "*deriving*"? Что это в языке Haskell? 
 ~deriving~ позволяет неявно определять функции стандартных ~typeclass~'ов. Детали такой неявной реализации иногда зависят от компилятора. 
@@ -181,19 +184,17 @@ type P a = a Int
 ~C :: (* -> *) -> *~
 *** DONE Укажите kind типа ~type D a = (a Int, Num Int)~
 ~D :: (* -> Constraint) -> Constraint~
-** [15/18]Question 4: Type hierarchy
-*** TODO Чему равно значение ~length (Left "hello")~ и почему?
-/Написать подробнее/
-
+** [16/18]Question 4: Type hierarchy
+*** DONE Чему равно значение ~length (Left "hello")~ и почему?
 0
 #+BEGIN_SRC haskell
 length = foldr (\_ n -> 1 + n) 0
 #+END_SRC 
-*** TODO Чему равно значение ~length (Just [1..10])~ и почему?
-/Написать подробнее/
-
+см. реализацию ~Foldable~ для ~Either~
+*** DONE Чему равно значение ~length (Just [1..10])~ и почему?
 1
-*** DONE Напишите ~typeclass~ ~Traversable~
+см. выше и реализацию ~Foldable~ для ~Maybe~
+*** TODO Напишите ~typeclass~ ~Traversable~
 #+BEGIN_SRC haskell
 class (Functor t, Foldable t) => Traversable t where
   traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
@@ -225,6 +226,8 @@ instance Traversable Maybe where
       traverse f (Right y) = Right <$> f y
 #+END_SRC
 *** TODO Напишите ~typeclass~ ~Foldable~
+#+BEGIN_SRC haskell
+#+END_SRC
 *** DONE Напишите реализацию ~Foldable~ для списка 
 #+BEGIN_SRC haskell
 instance Foldable [] where
@@ -294,17 +297,35 @@ transform = Arrow . f
 
 foldr f = getArrow . foldMap (transform f)
 #+END_SRC
-** [6/10]Question 5: Functors
+** [10/10]Question 5: Factors
 *** DONE Напишите законы *функтора*
 #+BEGIN_SRC haskell
 1. fmap id = id
 2. fmap (f . g)   = (fmap f) . (fmap g)
    fmap (f . g) F = fmap f (fmap g F)
 #+END_SRC
-*** TODO Напишите ~type class Functor~ и его реализацию для ~((->) r)~
-*** TODO Напишите ~type class Functor~ и его реализацию для ~Maybe~
-*** TODO Напишите ~type class Functor~ и его реализацию для ~Either~
-*** TODO Напишитe ~type class Functor~ и его реализацию для ~[]~
+*** DONE Напишите ~type class Functor~ и его реализацию для ~((->) r)~
+#+BEGIN_SRC haskell
+instance Functor ((->) r) where
+    fmap = (.)
+#+END_SRC
+*** DONE Напишите ~type class Functor~ и его реализацию для ~Maybe~
+#+BEGIN_SRC haskell
+instance Functor Maybe where
+    fmap f (Just x) = Just f x
+    fmap _ Nothing = Nothing
+#+END_SRC
+*** DONE Напишите ~type class Functor~ и его реализацию для ~Either~
+#+BEGIN_SRC haskell
+instance Functor (Either e) where
+    fmap f (Right x) = Right (f x)
+    fmap _ l         = l
+#+END_SRC
+*** DONE Напишитe ~type class Functor~ и его реализацию для ~[]~
+#+BEGIN_SRC haskell
+instance Functor ([]) where
+    fmap = map
+#+END_SRC
 *** DONE Реализуйте функцию ~(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)~ 
 #+BEGIN_SRC haskell
 (<<$>>) f w = (fmap $ fmap f) w
