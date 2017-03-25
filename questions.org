@@ -297,7 +297,7 @@ transform = Arrow . f
 
 foldr f = getArrow . foldMap (transform f)
 #+END_SRC
-** [10/10]Question 5: Factors
+** [10/10]Question 5: Functors
 *** DONE Напишите законы *функтора*
 #+BEGIN_SRC haskell
 1. fmap id = id
