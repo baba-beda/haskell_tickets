@@ -306,6 +306,11 @@ foldr f = getArrow . foldMap (transform f)
 #+END_SRC
 *** DONE Напишите ~type class Functor~ и его реализацию для ~((->) r)~
 #+BEGIN_SRC haskell
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+  (<$) :: a        -> f b -> f a
+  (<$) = fmap . const
+
 instance Functor ((->) r) where
     fmap = (.)
 #+END_SRC
