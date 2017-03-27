@@ -559,9 +559,9 @@ instance Monoid w => Monad (Writer w) where
 #+BEGIN_SRC haskell
 newtype Reader e a = Reader { runReader :: e -> a }
 
-instance Monad (Reader e) where
-    return a = Reader $ \_ -> a
-    m >>= f  = Reader $ \r -> runReader (f $ runReader m r) r
+instance Monad (Reader e) where 
+    return a         = Reader $ \e -> a 
+    (Reader r) >>= f = Reader $ \e -> runReader (f (r e)) e
 #+END_SRC
 *** DONE Напишите определение типа данных ~State~ и его ~instance Monad~
 #+BEGIN_SRC haskell
@@ -608,9 +608,7 @@ do x <- mx
    do y <- my
       z
 -- desugars to:
-mx >>= (\x ->
-my >>= (\y ->
-z ))
+mx >>= (\x -> my >>= (\y -> z ))
 
 -- non-recursive let in a do block desugars to a lambda:
 do let x = y
@@ -620,7 +618,7 @@ do let x = y
 #+END_SRC
 *** DONE Что такое ~IO~? Как теоретически это реализовано? 
 #+BEGIN_SRC haskell
-data IO a :: * \rightarrow *
+data IO a :: * -> *
 instance Monad IO where
     (>>=) = bindIO
 #+END_SRC
