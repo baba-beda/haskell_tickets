@@ -623,7 +623,7 @@ instance Monad IO where
     (>>=) = bindIO
 #+END_SRC
 *** DONE Отличие ~unsafePerformIO~ от ~unsafeInterleaveIO~?
-unsafeInterleaveIO~ дает дополнительные гарантии на порядок операций, идейно так реализовано:
+~unsafeInterleaveIO~ дает дополнительные гарантии на порядок операций, идейно так реализовано:
 #+BEGIN_SRC haskell
 do
     before
@@ -839,7 +839,7 @@ fmapFB f = \(FB a) -> FB (f <$> a)
 #+END_SRC
 *** DONE Написать ~fmap~ с ~forall~
 #+BEGIN_SRC haskell
-fmap :: forall f . forall a b . (a \rightarrow b) \rightarrow f a \rightarrow f b
+fmap :: forall f . forall a b . (a -> b) -> f a -> f b
 #+END_SRC
 ** [6/8]Question 14: Advanced types
 *** DONE Что такое *typed holes* и зачем они нужны?
@@ -970,7 +970,7 @@ instance Comonad ListZipper where
 *** DONE Напишите класс ~ComonadTrans~
 #+BEGIN_SRC haskell
 class ComonadTrans t where
-    lower :: Comonad w \Rightarrow t w a \rightarrow w a
+    lower :: Comonad w -> t w a -> w a
 #+END_SRC
 *** DONE Как можно было бы сделать ~codo~ нотацию для комонад? И что бы происходило в этом синтаксическом сахаре?
 #+BEGIN_SRC haskell
